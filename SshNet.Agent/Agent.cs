@@ -1,22 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.IO.Pipes;
-using System.Net.Sockets;
-using System.Runtime.InteropServices;
+﻿using System.Collections.Generic;
 using Renci.SshNet;
 using SshNet.Agent.AgentMessage;
 using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
-    public sealed class Agent : IDisposable
+    public sealed class Agent
     {
-        private readonly NamedPipeClientStream? _pipe;
-        private readonly Socket? _socket;
-        private readonly Stream _stream;
-        private readonly AgentReader _reader;
-        private readonly AgentWriter _writer;
+        private readonly string _socketPath;
 
         public Agent() : this(AgentSocketPath.GetPath())
         {
@@ -24,22 +15,7 @@ namespace SshNet.Agent
 
         public Agent(string socketPath)
         {
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
-                _pipe.Connect();
-                _stream = _pipe;
-            }
-            else
-            {
-                var ep = new UnixDomainSocketEndPoint(socketPath);
-                _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-                _socket.Connect(ep);
-                _stream = new NetworkStream(_socket);
-            }
-
-            _reader = new AgentReader(_stream);
-            _writer = new AgentWriter(_stream);
+            _socketPath = socketPath;
         }
 
         public IEnumerable<AgentIdentity> RequestIdentities()
@@ -64,34 +40,12 @@ namespace SshNet.Agent
 
         private object Send(IAgentMessage message)
         {
-            message.To(_writer);
-            return message.From(_reader);
+            using var socketStream = new AgentSocketStream(_socketPath);
+            using var writer = new AgentWriter(socketStream);
+            using var reader = new AgentReader(socketStream);
+
+            message.To(writer);
+            return message.From(reader);
         }
-
-        #region IDisposable
-        private bool _disposed;
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        private void Dispose(bool disposing)
-        {
-            if (_disposed)
-                return;
-
-            if (disposing)
-            {
-                _reader?.Dispose();
-                _writer?.Dispose();
-                _stream?.Dispose();
-                _socket?.Dispose();
-                _pipe?.Dispose();
-            }
-
-            _disposed = true;
-        }
-        #endregion
     }
 }

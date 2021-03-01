@@ -19,7 +19,7 @@ namespace SshNet.Agent.Sample
     {
         static void Main(string[] args)
         {
-            using var agent = new Agent();
+            var agent = new Agent();
 
             var testKeys = new[]
             {

@@ -34,7 +34,7 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 ## Usage
 
 ```csharp
-using var agent = new Agent();
+var agent = new Agent();
 
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);
