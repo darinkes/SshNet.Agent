@@ -40,13 +40,13 @@ namespace SshNet.Agent.AgentMessage
                     keyWriter.EncodeEcKey(ecdsa.Ecdsa);
                     break;
             }
-
             // comment
             keyWriter.EncodeString($"SshNet.Agent {key}");
+            var keyData = keyStream.ToArray();
 
-            writer.Write((uint)(1 + keyStream.ToArray().Length));
+            writer.Write((uint)(1 + keyData.Length));
             writer.Write((byte)AgentMessageType.SSH2_AGENTC_ADD_IDENTITY);
-            writer.Write(keyStream.ToArray());
+            writer.Write(keyData);
         }
 
         public object From(AgentReader reader)
