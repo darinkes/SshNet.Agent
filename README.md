@@ -26,6 +26,7 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 - Auth
 - Adding Keys
 - Getting Keys
+- Removing Keys
 - Removing all Keys
 
 ## Agent Protocol Documentation
