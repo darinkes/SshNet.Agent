@@ -12,7 +12,7 @@ Works on my machine - WIP
 
 Currently builds it's own fork of [SSH.NET](https://github.com/sshnet/SSH.NET).
 
-Needs this Commit: https://github.com/darinkes/SSH.NET-1/commit/8eafe3b11c2ee50a8e097963c6f1e8e794fbd0a5
+Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 
 ## Keys
 * ssh-ed25519
