@@ -1,31 +1,43 @@
-﻿using System;
+﻿#nullable enable
+using System;
+using System.IO;
+using SshNet.Agent.Keys;
 
 namespace SshNet.Agent.AgentMessage
 {
-    enum RemoveIdentityMode
-    {
-        All
-    }
-
     internal class RemoveIdentity : IAgentMessage
     {
-        private readonly RemoveIdentityMode _mode;
+        private readonly IAgentKey? _agentKey;
 
-        public RemoveIdentity(RemoveIdentityMode mode)
+        public RemoveIdentity()
         {
-            _mode = mode;
+        }
+
+        public RemoveIdentity(IAgentKey agentKey)
+        {
+            _agentKey = agentKey;
         }
 
         public void To(AgentWriter writer)
         {
-            if (_mode == RemoveIdentityMode.All)
+            if (_agentKey is null)
             {
                 writer.Write((uint) 1);
                 writer.Write((byte) AgentMessageType.SSH2_AGENTC_REMOVE_ALL_IDENTITIES);
+                return;
             }
+
+            using var keyStream = new MemoryStream();
+            using var keyWriter = new AgentWriter(keyStream);
+            keyWriter.EncodeString(_agentKey.KeyData);
+            var keyData = keyStream.ToArray();
+
+            writer.Write((uint) (1 + keyData.Length));
+            writer.Write((byte) AgentMessageType.SSH2_AGENTC_REMOVE_IDENTITY);
+            writer.Write(keyData);
         }
 
-        public object From(AgentReader reader)
+        public object? From(AgentReader reader)
         {
             _ = reader.ReadUInt32(); // msglen
             var answer = (AgentMessageType)reader.ReadByte();

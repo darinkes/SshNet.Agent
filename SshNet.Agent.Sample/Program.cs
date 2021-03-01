@@ -20,6 +20,7 @@ namespace SshNet.Agent.Sample
         static void Main(string[] args)
         {
             var agent = new Agent();
+            agent.RemoveAllIdentities();
 
             var testKeys = new[]
             {
@@ -30,7 +31,6 @@ namespace SshNet.Agent.Sample
             {
                 Console.WriteLine($"Testing Key {testKey}");
                 var keyFile = new PrivateKeyFile(GetKey(testKey));
-                agent.RemoveAllIdentities();
                 agent.AddIdentity(keyFile);
 
                 var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
@@ -46,6 +46,10 @@ namespace SshNet.Agent.Sample
                 {
                     Console.WriteLine(e);
                 }
+                agent.RemoveIdentities(keys.ToList());
+
+                if (agent.RequestIdentities().Any())
+                    throw new Exception("There should be no keys!");
             }
             Console.WriteLine("Done");
         }

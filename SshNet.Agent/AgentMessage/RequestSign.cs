@@ -17,13 +17,16 @@ namespace SshNet.Agent.AgentMessage
 
         public void To(AgentWriter writer)
         {
-            writer.Write((uint)(1 + 4 + _data.Length + 4 + _key.KeyData.Length + 4));
+            using var signStream = new MemoryStream();
+            using var signWriter = new AgentWriter(signStream);
+            signWriter.EncodeString(_key.KeyData);
+            signWriter.EncodeString(_data);
+            signWriter.Write((uint)0);
+            var signData = signStream.ToArray();
+
+            writer.Write((uint)(1 + signData.Length));
             writer.Write((byte)AgentMessageType.SSH2_AGENTC_SIGN_REQUEST);
-            writer.Write((uint)_key.KeyData.Length);
-            writer.Write(_key.KeyData);
-            writer.Write((uint)_data.Length);
-            writer.Write(_data);
-            writer.Write((uint)0);
+            writer.Write(signData);
         }
 
         public object From(AgentReader reader)

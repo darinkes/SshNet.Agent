@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Renci.SshNet;
+using Renci.SshNet.Security;
 using SshNet.Agent.AgentMessage;
 using SshNet.Agent.Keys;
 
@@ -25,7 +27,24 @@ namespace SshNet.Agent
 
         public void RemoveAllIdentities()
         {
-            _ = Send(new RemoveIdentity(RemoveIdentityMode.All));
+            _ = Send(new RemoveIdentity());
+        }
+
+        public void RemoveIdentities(IEnumerable<PrivateKeyFile> privateKeyFiles)
+        {
+            foreach (var privateKeyFile in privateKeyFiles)
+            {
+                RemoveIdentity(privateKeyFile);
+            }
+        }
+
+        public void RemoveIdentity(PrivateKeyFile privateKeyFile)
+        {
+            var agentKey = ((KeyHostAlgorithm)privateKeyFile.HostKey).Key as IAgentKey;
+            if (agentKey is null)
+                throw new ArgumentException("Just AgentKeys can be removed");
+
+            _ = Send(new RemoveIdentity(agentKey));
         }
 
         public void AddIdentity(PrivateKeyFile keyFile)
