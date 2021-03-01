@@ -1,39 +1,33 @@
-﻿using System;
-using System.Text;
-using Renci.SshNet.Common;
+﻿using Renci.SshNet.Security;
+using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    public class EcdsaAgentKey : AgentKey
+    public class EcdsaAgentKey : EcdsaKey, IAgentKey
     {
-        private readonly byte[] _curve;
-        private readonly byte[] _publicKey;
+        public byte[] KeyData { get; }
 
-        public override string ToString()
+        public Agent Agent { get; }
+
+        private AgentSignature? _signature;
+        protected override DigitalSignature DigitalSignature
         {
-            return $"ecdsa-sha2-nistp{KeyLength}";
-        }
-
-        public override BigInteger[] Public {
             get
             {
-                return new BigInteger[] {new BigInteger(_curve.Reverse()), new BigInteger(_publicKey.Reverse()) };
-            }
-            set => throw new NotImplementedException();
-        }
-        public override int KeyLength { get; }
+                if (_signature is null)
+                {
+                    _signature = new AgentSignature(Agent, this);
+                }
 
-        public EcdsaAgentKey(string curve, byte[] publicKey, Agent agent, byte[] keyData) : base(agent, keyData)
+                return _signature;
+            }
+        }
+
+        public EcdsaAgentKey(string curve, byte[] uncompressedCoords, Agent agent, byte[] keyData)
+            : base(curve, uncompressedCoords, null)
         {
-            KeyLength = curve switch
-            {
-                "nistp521" => 521,
-                "nistp384" => 384,
-                "nistp256" => 256,
-                _ => throw new Exception($"Unsupported Curve {curve}")
-            };
-            _curve = Encoding.ASCII.GetBytes(curve);
-            _publicKey = publicKey;
+            KeyData = keyData;
+            Agent = agent;
         }
     }
 }

@@ -57,7 +57,7 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile));
         }
 
-        public byte[] Sign(AgentKey key, byte[] data)
+        public byte[] Sign(IAgentKey key, byte[] data)
         {
             return (byte[])Send(new RequestSign(key, data));
         }

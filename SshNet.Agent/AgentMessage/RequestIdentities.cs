@@ -57,7 +57,7 @@ namespace SshNet.Agent.AgentMessage
                         break;
                     case "ssh-ed25519":
                         var pK = keyReader.ReadBignum2();
-                        key = new PrivateKeyFile(new Ed25519AgentKey(pK, _agent, keyData));
+                        key = new PrivateKeyFile(new ED25519AgentKey(pK, _agent, keyData));
                         break;
                     default:
                         throw new Exception($"Unsupported KeyType {keyType}");

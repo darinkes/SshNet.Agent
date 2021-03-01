@@ -6,10 +6,10 @@ namespace SshNet.Agent.AgentMessage
 {
     internal class RequestSign : IAgentMessage
     {
-        private readonly AgentKey _key;
+        private readonly IAgentKey _key;
         private readonly byte[] _data;
 
-        public RequestSign(AgentKey key, byte[] data)
+        public RequestSign(IAgentKey key, byte[] data)
         {
             _key = key;
             _data = data;

@@ -1,32 +1,33 @@
-﻿using System;
-using Renci.SshNet.Common;
+﻿using Renci.SshNet.Common;
+using Renci.SshNet.Security;
+using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    internal class RsaAgentKey : AgentKey
+    internal class RsaAgentKey : RsaKey, IAgentKey
     {
-        public override string ToString()
-        {
-            return "ssh-rsa";
-        }
+        public byte[] KeyData { get; }
 
-        public BigInteger Modulus => _privateKey[0];
+        public Agent Agent { get; }
 
-        public BigInteger Exponent => _privateKey[1];
-
-        public override int KeyLength => Modulus.BitLength;
-
-        public override BigInteger[] Public
+        private AgentSignature? _signature;
+        protected override DigitalSignature DigitalSignature
         {
             get
             {
-                return new[] { Exponent, Modulus };
+                if (_signature is null)
+                {
+                    _signature = new AgentSignature(Agent, this);
+                }
+
+                return _signature;
             }
-            set => throw new NotImplementedException();
         }
 
-        public RsaAgentKey(BigInteger modulus, BigInteger exponent, Agent agent, byte[] keyData) : base(agent, keyData)
+        public RsaAgentKey(BigInteger modulus, BigInteger exponent, Agent agent, byte[] keyData)
         {
+            KeyData = keyData;
+            Agent = agent;
             _privateKey = new BigInteger[2];
             _privateKey[0] = modulus;
             _privateKey[1] = exponent;

@@ -3,11 +3,11 @@ using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    public abstract class AgentKey : Key
+    public class ED25519AgentKey : ED25519Key, IAgentKey
     {
-        public byte[] KeyData { get; private set; }
+        public byte[] KeyData { get; }
 
-        private Agent Agent { get; }
+        public Agent Agent { get; }
 
         private AgentSignature? _signature;
         protected override DigitalSignature DigitalSignature
@@ -23,7 +23,7 @@ namespace SshNet.Agent.Keys
             }
         }
 
-        protected AgentKey(Agent agent, byte[] keyData)
+        public ED25519AgentKey(byte[] pk, Agent agent, byte[] keyData) : base(pk)
         {
             Agent = agent;
             KeyData = keyData;

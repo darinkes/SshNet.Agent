@@ -42,7 +42,7 @@ namespace SshNet.Agent.AgentMessage
             }
 
             // comment
-            keyWriter.EncodeString($"SshNet.Agent {key.ToString()}");
+            keyWriter.EncodeString($"SshNet.Agent {key}");
 
             writer.Write((uint)(1 + keyStream.ToArray().Length));
             writer.Write((byte)AgentMessageType.SSH2_AGENTC_ADD_IDENTITY);
