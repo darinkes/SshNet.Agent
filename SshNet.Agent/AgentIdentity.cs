@@ -4,7 +4,7 @@ namespace SshNet.Agent
 {
     public record AgentIdentity
     {
-        public string Comment { get; init; }
-        public PrivateKeyFile Key { get; init; }
+        public string Comment { get; set; }
+        public PrivateKeyFile Key { get; set; }
     }
 }
