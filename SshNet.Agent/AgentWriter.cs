@@ -49,8 +49,8 @@ namespace SshNet.Agent
         {
             var ecdsaParameters = ecdsa.ExportParameters(true);
             EncodeString(ecdsa.EcCurveNameSshCompat());
-            EncodeString(ecdsaParameters.UncompressedCoords());
-            EncodeBignum2(ecdsaParameters.D);
+            EncodeString(ecdsaParameters.UncompressedCoords(ecdsa.EcCoordsLength()));
+            EncodeBignum2(ecdsaParameters.D.ToBigInteger2().ToByteArray().Reverse());
         }
     }
 }

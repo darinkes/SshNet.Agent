@@ -17,12 +17,26 @@ namespace SshNet.Agent.Extensions
             };
         }
 
-        public static byte[] UncompressedCoords(this ECParameters ecdsaParameters)
+        public static int EcCoordsLength(this ECDsa ecdsa)
         {
-            var q = new byte[1 + ecdsaParameters.Q.X.Length + ecdsaParameters.Q.Y.Length];
+            return ecdsa.KeySize switch
+            {
+                256 => 32,
+                384 => 48,
+                521 => 66,
+                _ => throw new CryptographicException("Unsupported KeyLength")
+            };
+        }
+
+        public static byte[] UncompressedCoords(this ECParameters ecdsaParameters, int coordLength)
+        {
+            var q = new byte[1 + 2 * coordLength];
+            var qx = ecdsaParameters.Q.X.Pad(coordLength);
+            var qy = ecdsaParameters.Q.Y.Pad(coordLength);
+
             Buffer.SetByte(q, 0, 4); // Uncompressed
-            Buffer.BlockCopy(ecdsaParameters.Q.X, 0, q, 1, ecdsaParameters.Q.X.Length);
-            Buffer.BlockCopy(ecdsaParameters.Q.Y, 0, q, ecdsaParameters.Q.X.Length + 1, ecdsaParameters.Q.Y.Length);
+            Buffer.BlockCopy(qx, 0, q, 1, qx.Length);
+            Buffer.BlockCopy(qy, 0, q, coordLength + 1, qy.Length);
             return q;
         }
     }
