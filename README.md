@@ -1,7 +1,7 @@
 SshNet.Agent
 =============
 
-[SSH.NET](https://github.com/sshnet/SSH.NET) Extension to authenticate via OpenSSH Agent
+[SSH.NET](https://github.com/sshnet/SSH.NET) Extension to authenticate via OpenSSH Agent or PuTTY Pageant
 
 ![CodeQL](https://github.com/darinkes/SshNet.Agent/workflows/CodeQL/badge.svg)
 ![.NET](https://github.com/darinkes/SshNet.Agent/workflows/.NET/badge.svg)
@@ -34,8 +34,23 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 
 ## Usage
 
+### OpenSSH Agent
 ```csharp
 var agent = new Agent();
+
+var keyFile = new PrivateKeyFile("test.key");
+agent.AddIdentity(keyFile);
+
+var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+
+using var client = new SshClient("ssh.foo.com", "root", keys);
+client.Connect();
+Console.WriteLine(client.RunCommand("hostname").Result);
+```
+
+### PuTTY Pageant
+```csharp
+var agent = new Pageant();
 
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);

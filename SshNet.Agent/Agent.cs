@@ -7,7 +7,7 @@ using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
-    public sealed class Agent
+    public class Agent
     {
         private readonly string _socketPath;
 
@@ -57,7 +57,7 @@ namespace SshNet.Agent
             return (byte[])Send(new RequestSign(key, data));
         }
 
-        private object Send(IAgentMessage message)
+        internal virtual object Send(IAgentMessage message)
         {
             using var socketStream = new AgentSocketStream(_socketPath);
             using var writer = new AgentWriter(socketStream);

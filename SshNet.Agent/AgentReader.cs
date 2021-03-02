@@ -5,7 +5,7 @@ using Renci.SshNet.Common;
 
 namespace SshNet.Agent
 {
-    public class AgentReader : BinaryReader
+    internal class AgentReader : BinaryReader
     {
         public AgentReader(Stream input) : base(input, Encoding.Default, true)
         {
