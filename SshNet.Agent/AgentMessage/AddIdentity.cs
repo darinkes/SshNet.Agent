@@ -22,13 +22,15 @@ namespace SshNet.Agent.AgentMessage
 
             var key = ((KeyHostAlgorithm) _keyFile.HostKey).Key;
             keyWriter.EncodeString(key.ToString());
-            switch (key)
+            switch (key.ToString())
             {
-                case ED25519Key ed25519:
+                case "ssh-ed25519":
+                    var ed25519 = (ED25519Key)key;
                     keyWriter.EncodeBignum2(ed25519.PublicKey);
                     keyWriter.EncodeBignum2(ed25519.PrivateKey);
                     break;
-                case RsaKey rsa:
+                case "ssh-rsa":
+                    var rsa = (RsaKey)key;
                     keyWriter.EncodeBignum2(rsa.Modulus.ToByteArray().Reverse());
                     keyWriter.EncodeBignum2(rsa.Exponent.ToByteArray().Reverse());
                     keyWriter.EncodeBignum2(rsa.D.ToByteArray().Reverse());
@@ -36,7 +38,12 @@ namespace SshNet.Agent.AgentMessage
                     keyWriter.EncodeBignum2(rsa.P.ToByteArray().Reverse());
                     keyWriter.EncodeBignum2(rsa.Q.ToByteArray().Reverse());
                     break;
-                case EcdsaKey ecdsa:
+                case "ecdsa-sha2-nistp256":
+                // Fallthrough
+                case "ecdsa-sha2-nistp384":
+                // Fallthrough
+                case "ecdsa-sha2-nistp521":
+                    var ecdsa = (EcdsaKey)key;
                     keyWriter.EncodeEcKey(ecdsa.Ecdsa);
                     break;
             }
