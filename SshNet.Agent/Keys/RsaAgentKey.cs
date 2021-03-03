@@ -1,5 +1,4 @@
-﻿#nullable enable
-using Renci.SshNet.Common;
+﻿using Renci.SshNet.Common;
 using Renci.SshNet.Security;
 using Renci.SshNet.Security.Cryptography;
 

@@ -4,6 +4,6 @@
     {
         public void To(AgentWriter writer);
 
-        public object From(AgentReader reader);
+        public object? From(AgentReader reader);
     }
 }

@@ -22,7 +22,10 @@ namespace SshNet.Agent
 
         public IEnumerable<AgentIdentity> RequestIdentities()
         {
-            return (IEnumerable<AgentIdentity>)Send(new RequestIdentities(this));
+            var list = Send(new RequestIdentities(this));
+            if (list is null)
+                return new List<AgentIdentity>();
+            return (IEnumerable<AgentIdentity>)list;
         }
 
         public void RemoveAllIdentities()
@@ -54,10 +57,13 @@ namespace SshNet.Agent
 
         public byte[] Sign(IAgentKey key, byte[] data)
         {
-            return (byte[])Send(new RequestSign(key, data));
+            var signature = Send(new RequestSign(key, data));
+            if (signature is null)
+                return new byte[0];
+            return (byte[])signature;
         }
 
-        internal virtual object Send(IAgentMessage message)
+        internal virtual object? Send(IAgentMessage message)
         {
             using var socketStream = new AgentSocketStream(_socketPath);
             using var writer = new AgentWriter(socketStream);

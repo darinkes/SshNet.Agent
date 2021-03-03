@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using Renci.SshNet;
-using Renci.SshNet.Common;
 using Renci.SshNet.Security;
+using SshNet.Agent.Extensions;
 
 namespace SshNet.Agent.AgentMessage
 {
@@ -56,7 +56,7 @@ namespace SshNet.Agent.AgentMessage
             writer.Write(keyData);
         }
 
-        public object From(AgentReader reader)
+        public object? From(AgentReader reader)
         {
             _ = reader.ReadUInt32(); // msglen
             var answer = (AgentMessageType)reader.ReadByte();

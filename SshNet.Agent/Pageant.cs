@@ -42,7 +42,7 @@ namespace SshNet.Agent
             return FindWindow("Pageant", "Pageant");
         }
 
-        internal override object Send(IAgentMessage message)
+        internal override object? Send(IAgentMessage message)
         {
             var hWnd = PageantWindow();
             if (hWnd == IntPtr.Zero)
