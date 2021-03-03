@@ -9,7 +9,7 @@ namespace SshNet.Agent.Keys
     {
         public byte[] KeyData { get; }
 
-        public Agent Agent { get; }
+        public SshAgent Agent { get; }
 
         private AgentSignature? _signature;
         protected override DigitalSignature DigitalSignature
@@ -25,7 +25,7 @@ namespace SshNet.Agent.Keys
             }
         }
 
-        public RsaAgentKey(BigInteger modulus, BigInteger exponent, Agent agent, byte[] keyData)
+        public RsaAgentKey(BigInteger modulus, BigInteger exponent, SshAgent agent, byte[] keyData)
         {
             KeyData = keyData;
             Agent = agent;

@@ -36,7 +36,7 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 
 ### OpenSSH Agent
 ```csharp
-var agent = new Agent();
+var agent = new SshAgent();
 
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);

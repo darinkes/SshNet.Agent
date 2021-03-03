@@ -4,10 +4,10 @@ namespace SshNet.Agent.Keys
 {
     public class AgentSignature : DigitalSignature
     {
-        private readonly Agent _agent;
+        private readonly SshAgent _agent;
         private readonly IAgentKey _agentKey;
 
-        public AgentSignature(Agent agent, IAgentKey agentKey)
+        public AgentSignature(SshAgent agent, IAgentKey agentKey)
         {
             _agent = agent;
             _agentKey = agentKey;

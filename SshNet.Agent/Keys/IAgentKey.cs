@@ -4,6 +4,6 @@
     {
         public byte[] KeyData { get; }
 
-        public Agent Agent { get; }
+        public SshAgent Agent { get; }
     }
 }

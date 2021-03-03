@@ -7,15 +7,15 @@ using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
-    public class Agent
+    public class SshAgent
     {
         private readonly string _socketPath;
 
-        public Agent() : this(AgentSocketPath.GetPath())
+        public SshAgent() : this(AgentSocketPath.GetPath())
         {
         }
 
-        public Agent(string socketPath)
+        public SshAgent(string socketPath)
         {
             _socketPath = socketPath;
         }

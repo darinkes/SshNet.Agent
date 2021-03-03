@@ -19,7 +19,7 @@ namespace SshNet.Agent.Sample
     {
         static void Main(string[] args)
         {
-            // var agent = new Agent();
+            // var agent = new SshAgent();
             var agent = new Pageant();
 
             agent.RemoveAllIdentities();

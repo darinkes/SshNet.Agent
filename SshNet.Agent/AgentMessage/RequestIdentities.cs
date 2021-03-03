@@ -8,9 +8,9 @@ namespace SshNet.Agent.AgentMessage
 {
     internal class RequestIdentities : IAgentMessage
     {
-        private readonly Agent _agent;
+        private readonly SshAgent _agent;
 
-        public RequestIdentities(Agent agent)
+        public RequestIdentities(SshAgent agent)
         {
             _agent = agent;
         }

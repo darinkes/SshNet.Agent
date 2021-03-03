@@ -6,7 +6,7 @@ using SshNet.Agent.AgentMessage;
 
 namespace SshNet.Agent
 {
-    public class Pageant : Agent
+    public class Pageant : SshAgent
     {
         private const int AgentMaxMsglen = 8192;
         private const long AgentCopydataId = 0x804e50ba;
