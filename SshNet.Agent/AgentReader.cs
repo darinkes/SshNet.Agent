@@ -17,7 +17,7 @@ namespace SshNet.Agent
             var data = base.ReadBytes(4);
             if (BitConverter.IsLittleEndian)
                 Array.Reverse(data);
-            return BitConverter.ToUInt32(data);
+            return BitConverter.ToUInt32(data, 0);
         }
 
         public byte[] ReadStringAsBytes()

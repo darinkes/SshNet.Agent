@@ -9,7 +9,9 @@ namespace SshNet.Agent
     public class AgentSocketStream : Stream, IDisposable
     {
         private readonly NamedPipeClientStream? _pipe;
+#if NETSTANDARD2_1
         private readonly Socket? _socket;
+#endif
         private readonly Stream _stream;
 
         public override void Flush()
@@ -56,11 +58,14 @@ namespace SshNet.Agent
                 _stream = _pipe;
                 return;
             }
-
+#if NETSTANDARD2_1
             var ep = new UnixDomainSocketEndPoint(socketPath);
             _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
             _socket.Connect(ep);
             _stream = new NetworkStream(_socket);
+#else
+            throw new NotSupportedException();
+#endif
         }
 
         #region IDisposable
@@ -78,8 +83,10 @@ namespace SshNet.Agent
 
             if (disposing)
             {
-                _stream?.Dispose();
+                _stream.Dispose();
+#if NETSTANDARD2_1
                 _socket?.Dispose();
+#endif
                 _pipe?.Dispose();
             }
 
