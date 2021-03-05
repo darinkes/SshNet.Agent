@@ -13,15 +13,7 @@ namespace SshNet.Agent.Keys
         private AgentSignature? _signature;
         protected override DigitalSignature DigitalSignature
         {
-            get
-            {
-                if (_signature is null)
-                {
-                    _signature = new AgentSignature(Agent, this);
-                }
-
-                return _signature;
-            }
+            get { return _signature ??= new AgentSignature(Agent, this); }
         }
 
         public RsaAgentKey(BigInteger modulus, BigInteger exponent, SshAgent agent, byte[] keyData)

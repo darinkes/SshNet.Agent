@@ -1,12 +1,14 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
+#if NETSTANDARD2_1
 using System.Net.Sockets;
+#endif
 using System.Runtime.InteropServices;
 
 namespace SshNet.Agent
 {
-    public class AgentSocketStream : Stream, IDisposable
+    internal class AgentSocketStream : Stream, IDisposable
     {
         private readonly NamedPipeClientStream? _pipe;
 #if NETSTANDARD2_1

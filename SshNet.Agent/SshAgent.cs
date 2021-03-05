@@ -43,8 +43,7 @@ namespace SshNet.Agent
 
         public void RemoveIdentity(PrivateKeyFile privateKeyFile)
         {
-            var agentKey = ((KeyHostAlgorithm)privateKeyFile.HostKey).Key as IAgentKey;
-            if (agentKey is null)
+            if (!(((KeyHostAlgorithm)privateKeyFile.HostKey).Key is IAgentKey agentKey))
                 throw new ArgumentException("Just AgentKeys can be removed");
 
             _ = Send(new RemoveIdentity(agentKey));
@@ -55,7 +54,7 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile));
         }
 
-        public byte[] Sign(IAgentKey key, byte[] data)
+        internal byte[] Sign(IAgentKey key, byte[] data)
         {
             var signature = Send(new RequestSign(key, data));
             if (signature is null)

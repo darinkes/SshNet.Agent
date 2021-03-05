@@ -3,7 +3,7 @@ using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    public class EcdsaAgentKey : EcdsaKey, IAgentKey
+    internal class EcdsaAgentKey : EcdsaKey, IAgentKey
     {
         public byte[] KeyData { get; }
 
@@ -12,15 +12,7 @@ namespace SshNet.Agent.Keys
         private AgentSignature? _signature;
         protected override DigitalSignature DigitalSignature
         {
-            get
-            {
-                if (_signature is null)
-                {
-                    _signature = new AgentSignature(Agent, this);
-                }
-
-                return _signature;
-            }
+            get { return _signature ??= new AgentSignature(Agent, this); }
         }
 
         public EcdsaAgentKey(string curve, byte[] uncompressedCoords, SshAgent agent, byte[] keyData)

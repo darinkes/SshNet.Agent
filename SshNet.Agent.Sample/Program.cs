@@ -39,7 +39,7 @@ namespace SshNet.Agent.Sample
 
                 try
                 {
-                    using var client = new SshClient("schwanensee", 22222, "root", keys);
+                    using var client = new SshClient("schwanensee", "root", keys);
                     client.Connect();
                     Console.WriteLine(client.RunCommand("hostname").Result);
                     Console.WriteLine($"Key {testKey} worked!");

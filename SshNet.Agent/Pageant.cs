@@ -33,7 +33,7 @@ namespace SshNet.Agent
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                throw new Exception("Pageant is Windows only");
+                throw new NotSupportedException("Pageant is Windows only");
             }
         }
 
@@ -59,7 +59,7 @@ namespace SshNet.Agent
 
             var copyData = new Copydatastruct
             {
-                DwData = (IntPtr.Size == 4)
+                DwData = IntPtr.Size == 4
                     ? new IntPtr(unchecked((int) AgentCopydataId))
                     : new IntPtr(AgentCopydataId),
                 CbData = randomFileName.Length + 1,

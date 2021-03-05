@@ -3,7 +3,7 @@ using System.Runtime.InteropServices;
 
 namespace SshNet.Agent
 {
-    internal class AgentSocketPath
+    internal static class AgentSocketPath
     {
         internal static string GetPath()
         {

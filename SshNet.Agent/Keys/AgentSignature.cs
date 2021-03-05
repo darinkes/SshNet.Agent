@@ -2,7 +2,7 @@
 
 namespace SshNet.Agent.Keys
 {
-    public class AgentSignature : DigitalSignature
+    internal class AgentSignature : DigitalSignature
     {
         private readonly SshAgent _agent;
         private readonly IAgentKey _agentKey;
