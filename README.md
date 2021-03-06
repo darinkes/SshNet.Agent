@@ -1,7 +1,7 @@
 SshNet.Agent
 =============
 
-[SSH.NET](https://github.com/sshnet/SSH.NET) Extension to authenticate via OpenSSH Agent or PuTTY Pageant
+[SSH.NET](https://github.com/sshnet/SSH.NET) Extension to authenticate via OpenSSH Agent and PuTTY Pageant
 
 [![License](https://img.shields.io/github/license/darinkes/SshNet.Agent)](https://github.com/darinkes/SshNet.Agent/blob/main/LICENSE)
 
@@ -21,10 +21,9 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 
 * .NET 4.0
 * netstandard 2.0
-* netstandard2.1
+* netstandard 2.1
 
-Note: Only with netstandard2.1 it contains support for Unix Domain Sockets to use
-      ssh-agent on Linux.
+Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to use ssh-agent on Linux.
 
 ## Keys
 * ssh-ed25519
