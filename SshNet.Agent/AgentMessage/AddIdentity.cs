@@ -48,7 +48,7 @@ namespace SshNet.Agent.AgentMessage
                     var publicKey = ecdsa.Public;
                     keyWriter.EncodeString(publicKey[0].ToByteArray().Reverse());
                     keyWriter.EncodeString(publicKey[1].ToByteArray().Reverse());
-                    keyWriter.EncodeBignum2(ecdsa.Private.ToByteArray().Reverse());
+                    keyWriter.EncodeBignum2(ecdsa.PrivateKey.ToBigInteger2().ToByteArray().Reverse());
                     break;
             }
             // comment
