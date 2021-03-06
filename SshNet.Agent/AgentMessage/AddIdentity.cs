@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.Extensions;
@@ -44,7 +45,10 @@ namespace SshNet.Agent.AgentMessage
                 // Fallthrough
                 case "ecdsa-sha2-nistp521":
                     var ecdsa = (EcdsaKey)key;
-                    keyWriter.EncodeEcKey(ecdsa.Ecdsa);
+                    var publicKey = ecdsa.Public;
+                    keyWriter.EncodeString(publicKey[0].ToByteArray().Reverse());
+                    keyWriter.EncodeString(publicKey[1].ToByteArray().Reverse());
+                    keyWriter.EncodeBignum2(ecdsa.Private.ToByteArray().Reverse());
                     break;
             }
             // comment

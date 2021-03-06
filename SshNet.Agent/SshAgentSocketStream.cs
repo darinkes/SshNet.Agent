@@ -53,6 +53,7 @@ namespace SshNet.Agent
 
         public AgentSocketStream(string socketPath)
         {
+#if NETSTANDARD
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
@@ -67,6 +68,12 @@ namespace SshNet.Agent
             _stream = new NetworkStream(_socket);
 #else
             throw new NotSupportedException();
+#endif
+#else
+            _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
+            _pipe.Connect();
+            _stream = _pipe;
+            return;
 #endif
         }
 

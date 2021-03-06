@@ -41,12 +41,14 @@ namespace SshNet.Agent.Sample
                 {
                     using var client = new SshClient("schwanensee", "root", keys);
                     client.Connect();
-                    Console.WriteLine(client.RunCommand("hostname").Result);
+                    Console.WriteLine(client.RunCommand("hostname").Result.Trim());
                     Console.WriteLine($"Key {testKey} worked!");
+                    Console.WriteLine();
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e);
+                    Console.ReadLine();
                 }
                 agent.RemoveIdentities(keys.ToList());
 
@@ -54,6 +56,7 @@ namespace SshNet.Agent.Sample
                     throw new Exception("There should be no keys!");
             }
             Console.WriteLine("Done");
+            Console.ReadLine();
         }
 
         private static Stream GetKey(string keyname)

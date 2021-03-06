@@ -8,7 +8,11 @@ namespace SshNet.Agent
 {
     internal class AgentReader : BinaryReader
     {
+#if NETSTANDARD
         public AgentReader(Stream input) : base(input, Encoding.Default, true)
+#else
+        public AgentReader(Stream input) : base(input, Encoding.Default)
+#endif
         {
         }
 

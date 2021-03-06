@@ -1,14 +1,16 @@
 ﻿using System;
 using System.IO;
-using System.Security.Cryptography;
 using System.Text;
-using SshNet.Agent.Extensions;
 
 namespace SshNet.Agent
 {
     internal class AgentWriter : BinaryWriter
     {
+#if NETSTANDARD
         public AgentWriter(Stream stream) : base(stream, Encoding.Default, true)
+#else
+        public AgentWriter(Stream stream) : base(stream, Encoding.Default)
+#endif
         {
         }
 
@@ -43,14 +45,6 @@ namespace SshNet.Agent
         {
             EncodeUInt((uint)str.Length);
             base.Write(str);
-        }
-
-        public void EncodeEcKey(ECDsa ecdsa)
-        {
-            var ecdsaParameters = ecdsa.ExportParameters(true);
-            EncodeString(ecdsa.EcCurveNameSshCompat());
-            EncodeString(ecdsaParameters.UncompressedCoords(ecdsa.EcCoordsLength()));
-            EncodeBignum2(ecdsaParameters.D.ToBigInteger2().ToByteArray().Reverse());
         }
     }
 }

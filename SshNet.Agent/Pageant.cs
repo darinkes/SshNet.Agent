@@ -31,10 +31,12 @@ namespace SshNet.Agent
 
         public Pageant()
         {
+#if NETSTANDARD
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 throw new NotSupportedException("Pageant is Windows only");
             }
+#endif
         }
 
         private static IntPtr PageantWindow()
