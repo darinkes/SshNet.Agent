@@ -21,8 +21,8 @@ namespace SshNet.Agent.Sample
         {
             try
             {
-                var agent = new SshAgent();
-                // var agent = new Pageant();
+                // var agent = new SshAgent();
+                var agent = new Pageant();
 
                 agent.RemoveAllIdentities();
 

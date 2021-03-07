@@ -1,8 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
-using System.Runtime.InteropServices;
 #if NETSTANDARD2_1
+using System.Runtime.InteropServices;
 using System.Net.Sockets;
 #endif
 
