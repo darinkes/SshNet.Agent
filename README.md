@@ -4,6 +4,8 @@ SshNet.Agent
 [SSH.NET](https://github.com/sshnet/SSH.NET) Extension to authenticate via OpenSSH Agent and PuTTY Pageant
 
 [![License](https://img.shields.io/github/license/darinkes/SshNet.Agent)](https://github.com/darinkes/SshNet.Agent/blob/main/LICENSE)
+[![NuGet](https://img.shields.io/nuget/v/SshNet.Agent.svg?style=flat)](https://www.nuget.org/packages/SshNet.Agent)
+![Nuget](https://img.shields.io/nuget/dt/SshNet.Agent)
 
 ![CodeQL](https://github.com/darinkes/SshNet.Agent/workflows/CodeQL/badge.svg)
 ![.NET-Ubuntu](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Ubuntu/badge.svg)
