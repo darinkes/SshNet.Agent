@@ -1,20 +1,20 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
+using System.Runtime.InteropServices;
 #if NETSTANDARD2_1
 using System.Net.Sockets;
 #endif
-using System.Runtime.InteropServices;
 
 namespace SshNet.Agent
 {
-    internal class AgentSocketStream : Stream, IDisposable
+    internal class SshAgentSocketStream : Stream, IDisposable
     {
         private readonly NamedPipeClientStream? _pipe;
+        private readonly Stream _stream;
 #if NETSTANDARD2_1
         private readonly Socket? _socket;
 #endif
-        private readonly Stream _stream;
 
         public override void Flush()
         {
@@ -51,30 +51,21 @@ namespace SshNet.Agent
             set => _stream.Position = value;
         }
 
-        public AgentSocketStream(string socketPath)
+        public SshAgentSocketStream(string socketPath)
         {
-#if NETSTANDARD
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+#if NETSTANDARD2_1
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
-                _pipe.Connect();
-                _stream = _pipe;
+                var ep = new UnixDomainSocketEndPoint(socketPath);
+                _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+                _socket.Connect(ep);
+                _stream = new NetworkStream(_socket);
                 return;
             }
-#if NETSTANDARD2_1
-            var ep = new UnixDomainSocketEndPoint(socketPath);
-            _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-            _socket.Connect(ep);
-            _stream = new NetworkStream(_socket);
-#else
-            throw new NotSupportedException();
 #endif
-#else
             _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
             _pipe.Connect();
             _stream = _pipe;
-            return;
-#endif
         }
 
         #region IDisposable

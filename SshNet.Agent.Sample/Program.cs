@@ -19,41 +19,49 @@ namespace SshNet.Agent.Sample
     {
         static void Main(string[] args)
         {
-            // var agent = new SshAgent();
-            var agent = new Pageant();
-
-            agent.RemoveAllIdentities();
-
-            var testKeys = new[]
+            try
             {
-                "ed25519", "ecdsa256", "ecdsa384", "ecdsa521", "rsa2048", "rsa3072", "rsa4096", "rsa8192"
-            };
+                var agent = new SshAgent();
+                // var agent = new Pageant();
 
-            foreach (var testKey in testKeys)
+                agent.RemoveAllIdentities();
+
+                var testKeys = new[]
+                {
+                    "ed25519", "ecdsa256", "ecdsa384", "ecdsa521", "rsa2048", "rsa3072", "rsa4096", "rsa8192"
+                };
+
+                foreach (var testKey in testKeys)
+                {
+                    Console.WriteLine($"Testing Key {testKey}");
+                    var keyFile = new PrivateKeyFile(GetKey(testKey));
+                    agent.AddIdentity(keyFile);
+
+                    var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+
+                    try
+                    {
+                        using var client = new SshClient("schwanensee", "root", keys);
+                        client.Connect();
+                        Console.WriteLine(client.RunCommand("hostname").Result.Trim());
+                        Console.WriteLine($"Key {testKey} worked!");
+                        Console.WriteLine();
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e);
+                        Console.ReadLine();
+                    }
+                    agent.RemoveIdentities(keys.ToList());
+
+                    if (agent.RequestIdentities().Any())
+                        throw new Exception("There should be no keys!");
+                }
+            }
+            catch (Exception e)
             {
-                Console.WriteLine($"Testing Key {testKey}");
-                var keyFile = new PrivateKeyFile(GetKey(testKey));
-                agent.AddIdentity(keyFile);
-
-                var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
-
-                try
-                {
-                    using var client = new SshClient("schwanensee", "root", keys);
-                    client.Connect();
-                    Console.WriteLine(client.RunCommand("hostname").Result.Trim());
-                    Console.WriteLine($"Key {testKey} worked!");
-                    Console.WriteLine();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e);
-                    Console.ReadLine();
-                }
-                agent.RemoveIdentities(keys.ToList());
-
-                if (agent.RequestIdentities().Any())
-                    throw new Exception("There should be no keys!");
+                Console.WriteLine(e);
+                throw;
             }
             Console.WriteLine("Done");
             Console.ReadLine();

@@ -12,6 +12,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\SSH.NET\src\Renci.SshNet\Renci.SshNet.csproj"/>
+        <ProjectReference Include="..\SSH.NET\src\Renci.SshNet\Renci.SshNet.csproj" />
     </ItemGroup>
 </Project>

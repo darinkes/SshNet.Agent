@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.Extensions;

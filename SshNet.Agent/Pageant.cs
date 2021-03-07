@@ -50,8 +50,8 @@ namespace SshNet.Agent
             if (hWnd == IntPtr.Zero)
                 throw new Exception("Pageant Window not found");
 
-            var randomFileName = Path.GetRandomFileName();
-            using var memoryMappedFile = MemoryMappedFile.CreateNew(randomFileName, AgentMaxMsglen);
+            var tempFile = Path.GetRandomFileName();
+            using var memoryMappedFile = MemoryMappedFile.CreateNew(tempFile, AgentMaxMsglen);
 
             using var memoryMappedStream = memoryMappedFile.CreateViewStream();
             using var writer = new AgentWriter(memoryMappedStream);
@@ -64,8 +64,8 @@ namespace SshNet.Agent
                 DwData = IntPtr.Size == 4
                     ? new IntPtr(unchecked((int) AgentCopydataId))
                     : new IntPtr(AgentCopydataId),
-                CbData = randomFileName.Length + 1,
-                LpData = Marshal.StringToCoTaskMemAnsi(randomFileName)
+                CbData = tempFile.Length + 1,
+                LpData = Marshal.StringToCoTaskMemAnsi(tempFile)
             };
 
             var copyDataPtr = Marshal.AllocHGlobal(Marshal.SizeOf(copyData));
@@ -80,7 +80,10 @@ namespace SshNet.Agent
                 throw new Exception("Unable to send data to Pageant");
 
             memoryMappedStream.Position = 0;
-            return message.From(reader);
+            var ret = message.From(reader);
+            if (File.Exists(tempFile))
+                File.Delete(tempFile);
+            return ret;
         }
     }
 }

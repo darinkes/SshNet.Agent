@@ -11,7 +11,8 @@ namespace SshNet.Agent
     {
         private readonly string _socketPath;
 
-        public SshAgent() : this(AgentSocketPath.GetPath())
+        public SshAgent()
+            : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent")
         {
         }
 
@@ -64,7 +65,7 @@ namespace SshNet.Agent
 
         internal virtual object? Send(IAgentMessage message)
         {
-            using var socketStream = new AgentSocketStream(_socketPath);
+            using var socketStream = new SshAgentSocketStream(_socketPath);
             using var writer = new AgentWriter(socketStream);
             using var reader = new AgentReader(socketStream);
 
