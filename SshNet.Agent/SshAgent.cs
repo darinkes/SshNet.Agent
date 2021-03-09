@@ -9,7 +9,7 @@ namespace SshNet.Agent
 {
     public class SshAgent
     {
-        private readonly string _socketPath;
+        public string SocketPath { get; }
 
         public SshAgent()
             : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent")
@@ -18,7 +18,7 @@ namespace SshNet.Agent
 
         public SshAgent(string socketPath)
         {
-            _socketPath = socketPath;
+            SocketPath = socketPath;
         }
 
         public IEnumerable<AgentIdentity> RequestIdentities()
@@ -55,6 +55,13 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile));
         }
 
+#if NETSTANDARD2_1
+        public SshAgentForwarding Forward(string remotePath = "")
+        {
+            return new SshAgentForwarding(this, remotePath);
+        }
+#endif
+
         internal byte[] Sign(IAgentKey key, byte[] data)
         {
             var signature = Send(new RequestSign(key, data));
@@ -65,7 +72,7 @@ namespace SshNet.Agent
 
         internal virtual object? Send(IAgentMessage message)
         {
-            using var socketStream = new SshAgentSocketStream(_socketPath);
+            using var socketStream = new SshAgentSocketStream(SocketPath);
             using var writer = new AgentWriter(socketStream);
             using var reader = new AgentReader(socketStream);
 

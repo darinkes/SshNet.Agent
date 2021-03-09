@@ -25,7 +25,7 @@ Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
 * netstandard 2.0
 * netstandard 2.1
 
-Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to use ssh-agent on Linux.
+Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to use ssh-agent on Linux and Agent Forwarding.
 
 ## Keys
 * ssh-ed25519
@@ -41,6 +41,7 @@ Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to u
 - Getting Keys
 - Removing Keys
 - Removing all Keys
+- Agent Forwarding
 
 ## Agent Protocol Documentation
 [draft-miller-ssh-agent-02](https://tools.ietf.org/html/draft-miller-ssh-agent-02)
@@ -73,4 +74,20 @@ var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
+```
+
+### Agent Forwarding
+```csharp
+var agent = new Pageant();
+
+var keyFile = new PrivateKeyFile("test.key");
+agent.AddIdentity(keyFile);
+
+var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+
+using var client = new SshClient("ssh.foo.com", "root", keys);
+client.Connect();
+Console.WriteLine(client.RunCommand("hostname").Result);
+
+var forwardedAgent = client.ForwardAgent(agent, "/tmp/test-agent.sock");
 ```

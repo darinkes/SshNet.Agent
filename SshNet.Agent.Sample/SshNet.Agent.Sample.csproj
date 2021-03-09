@@ -14,5 +14,4 @@
     <ItemGroup>
         <EmbeddedResource Include="TestKeys\*" />
     </ItemGroup>
-
 </Project>

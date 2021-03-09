@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Renci.SshNet;
+using SshNet.Agent.Extensions;
 
 // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5W6BcNnMuNgLYuUa18F/Ci8dzPqeIO/H333n0yv4o6 
 // ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEqKSQ9hDmbqz04emjXekb3wRuP1SIhGC+kRd8VjbjSfZA/av6nTU7d2wkxO0IFIjeC7x95tvtVvxXQqNa8VRXE= 
@@ -43,6 +44,16 @@ namespace SshNet.Agent.Sample
                     {
                         using var client = new SshClient("schwanensee", "root", keys);
                         client.Connect();
+#if NET5_0
+                        client.RunCommand("rm -f /tmp/test-agent.sock");
+                        var forwardedAgent = client.ForwardAgent(agent, "/tmp/test-agent.sock");
+
+                        Console.WriteLine($"Agent forwarded to {forwardedAgent.RemotePath}, Enter to continue...");
+                        Console.ReadLine();
+
+                        client.RemoveForwardedPort(forwardedAgent.ForwardedPort);
+                        forwardedAgent.Stop();
+#endif
                         Console.WriteLine(client.RunCommand("hostname").Result.Trim());
                         Console.WriteLine($"Key {testKey} worked!");
                         Console.WriteLine();
