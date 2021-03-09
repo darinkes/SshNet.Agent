@@ -54,7 +54,7 @@ namespace SshNet.Agent
         public SshAgentSocketStream(string socketPath)
         {
 #if NETSTANDARD2_1
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (File.Exists(socketPath) || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var ep = new UnixDomainSocketEndPoint(socketPath);
                 _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
