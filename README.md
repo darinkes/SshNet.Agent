@@ -54,7 +54,7 @@ var agent = new SshAgent();
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);
 
-var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+var keys = agent.RequestIdentities().ToArray();
 
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
@@ -68,7 +68,7 @@ var agent = new Pageant();
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);
 
-var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+var keys = agent.RequestIdentities().ToArray();
 
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();

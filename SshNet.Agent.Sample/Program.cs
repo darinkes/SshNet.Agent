@@ -37,7 +37,7 @@ namespace SshNet.Agent.Sample
                     var keyFile = new PrivateKeyFile(GetKey(testKey));
                     agent.AddIdentity(keyFile);
 
-                    var keys = agent.RequestIdentities().Select(i => i.Key).ToArray();
+                    var keys = agent.RequestIdentities().ToArray();
 
                     try
                     {

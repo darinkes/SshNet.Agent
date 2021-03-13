@@ -21,12 +21,12 @@ namespace SshNet.Agent
             _socketPath = socketPath;
         }
 
-        public IEnumerable<AgentIdentity> RequestIdentities()
+        public PrivateKeyFile[] RequestIdentities()
         {
             var list = Send(new RequestIdentities(this));
             if (list is null)
-                return new List<AgentIdentity>();
-            return (IEnumerable<AgentIdentity>)list;
+                return new PrivateKeyFile[] {};
+            return (PrivateKeyFile[])list;
         }
 
         public void RemoveAllIdentities()

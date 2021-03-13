@@ -51,7 +51,7 @@ namespace SshNet.Agent.AgentMessage
                     break;
             }
             // comment
-            keyWriter.EncodeString($"SshNet.Agent {key}");
+            keyWriter.EncodeString(key.Comment ?? "");
             var keyData = keyStream.ToArray();
 
             writer.Write((uint)(1 + keyData.Length));
