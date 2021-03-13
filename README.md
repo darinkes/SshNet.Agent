@@ -10,6 +10,7 @@ SshNet.Agent
 ![CodeQL](https://github.com/darinkes/SshNet.Agent/workflows/CodeQL/badge.svg)
 ![.NET-Ubuntu](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Ubuntu/badge.svg)
 ![.NET-Windows](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Windows/badge.svg)
+![NuGet](https://github.com/darinkes/SshNet.Agent/workflows/NuGet/badge.svg)
 
 ## Status
 
@@ -54,7 +55,7 @@ var agent = new SshAgent();
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);
 
-var keys = agent.RequestIdentities().ToArray();
+var keys = agent.RequestIdentities();
 
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
@@ -68,7 +69,7 @@ var agent = new Pageant();
 var keyFile = new PrivateKeyFile("test.key");
 agent.AddIdentity(keyFile);
 
-var keys = agent.RequestIdentities().ToArray();
+var keys = agent.RequestIdentities();
 
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
