@@ -29,7 +29,7 @@ namespace SshNet.Agent.AgentMessage
             if (answer != AgentMessageType.SSH2_AGENT_IDENTITIES_ANSWER)
                 throw new Exception($"Wrong Answer {answer}");
 
-            var keys = new List<PrivateKeyFile>();
+            var keys = new List<PrivateKeyAgent>();
             var numKeys = reader.ReadUInt32();
             var i = 0;
             while (i < numKeys)
@@ -64,7 +64,7 @@ namespace SshNet.Agent.AgentMessage
                         throw new Exception($"Unsupported KeyType {keyType}");
                 }
                 key.Comment = reader.ReadString();
-                keys.Add(new PrivateKeyFile(key));
+                keys.Add(new PrivateKeyAgent(key));
                 i++;
             }
 

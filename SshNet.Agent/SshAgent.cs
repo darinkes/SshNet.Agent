@@ -21,12 +21,12 @@ namespace SshNet.Agent
             _socketPath = socketPath;
         }
 
-        public PrivateKeyFile[] RequestIdentities()
+        public PrivateKeyAgent[] RequestIdentities()
         {
             var list = Send(new RequestIdentities(this));
             if (list is null)
-                return new PrivateKeyFile[] {};
-            return (PrivateKeyFile[])list;
+                return new PrivateKeyAgent[] {};
+            return (PrivateKeyAgent[])list;
         }
 
         public void RemoveAllIdentities()
@@ -34,23 +34,22 @@ namespace SshNet.Agent
             _ = Send(new RemoveIdentity());
         }
 
-        public void RemoveIdentities(IEnumerable<PrivateKeyFile> privateKeyFiles)
+        public void RemoveIdentities(IEnumerable<PrivateKeyAgent> privateKeys)
         {
-            foreach (var privateKeyFile in privateKeyFiles)
+            foreach (var privateKey in privateKeys)
             {
-                RemoveIdentity(privateKeyFile);
+                RemoveIdentity(privateKey);
             }
         }
 
-        public void RemoveIdentity(PrivateKeyFile privateKeyFile)
+        public void RemoveIdentity(PrivateKeyAgent privateAgentKey)
         {
-            if (!(((KeyHostAlgorithm)privateKeyFile.HostKey).Key is IAgentKey agentKey))
+            if (!(((KeyHostAlgorithm)privateAgentKey.HostKey).Key is IAgentKey agentKey))
                 throw new ArgumentException("Just AgentKeys can be removed");
-
             _ = Send(new RemoveIdentity(agentKey));
         }
 
-        public void AddIdentity(PrivateKeyFile keyFile)
+        public void AddIdentity(IPrivateKeyFile keyFile)
         {
             _ = Send(new AddIdentity(keyFile));
         }

@@ -8,9 +8,9 @@ namespace SshNet.Agent.AgentMessage
 {
     internal class AddIdentity : IAgentMessage
     {
-        private readonly PrivateKeyFile _keyFile;
+        private readonly IPrivateKeyFile _keyFile;
 
-        public AddIdentity(PrivateKeyFile keyFile)
+        public AddIdentity(IPrivateKeyFile keyFile)
         {
             _keyFile = keyFile;
         }
