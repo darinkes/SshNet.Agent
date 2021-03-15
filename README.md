@@ -75,3 +75,20 @@ using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
 ```
+
+## Resharper Warning
+
+If you want to avoid the Resharper Warning "Co-variant array conversion": https://www.jetbrains.com/help/resharper/CoVariantArrayConversion.html
+
+```csharp
+var agent = new Pageant();
+
+var keyFile = new PrivateKeyFile("test.key");
+agent.AddIdentity(keyFile);
+
+var keys = agent.RequestIdentities();
+
+using var client = new SshClient("ssh.foo.com", "root", keys.ToArray<IPrivateKeyFile>());
+client.Connect();
+Console.WriteLine(client.RunCommand("hostname").Result);
+```

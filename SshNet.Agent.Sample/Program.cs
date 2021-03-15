@@ -41,7 +41,7 @@ namespace SshNet.Agent.Sample
 
                     try
                     {
-                        using var client = new SshClient("schwanensee", "root", keys);
+                        using var client = new SshClient("schwanensee", "root", keys.ToArray<IPrivateKeyFile>());
                         client.Connect();
                         Console.WriteLine(client.RunCommand("hostname").Result.Trim());
                         Console.WriteLine($"Key {testKey} worked!");
