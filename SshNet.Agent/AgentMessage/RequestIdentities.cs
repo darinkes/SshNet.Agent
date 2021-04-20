@@ -38,7 +38,7 @@ namespace SshNet.Agent.AgentMessage
                 using var keyReader = new AgentReader(keyStream);
 
                 var keyType = keyReader.ReadString();
-                PrivateKeyFile key;
+                PrivateKeyFile key = null;
                 switch (keyType)
                 {
                     case "ssh-rsa":
@@ -60,11 +60,16 @@ namespace SshNet.Agent.AgentMessage
                         key = new PrivateKeyFile(new ED25519AgentKey(pK, _agent, keyData));
                         break;
                     default:
-                        throw new Exception($"Unsupported KeyType {keyType}");
+                        // throw new Exception($"Unsupported KeyType {keyType}");
+                        break;
                 }
 
                 var comment = reader.ReadString();
-                keys.Add(new AgentIdentity { Key = key, Comment = comment });
+                if (key is not null)
+                {
+                    keys.Add(new AgentIdentity {Key = key, Comment = comment});
+                }
+
                 i++;
             }
 
