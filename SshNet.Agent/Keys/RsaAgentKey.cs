@@ -4,7 +4,7 @@ using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    internal class RsaAgentKey : RsaKey, IAgentKey
+    public class RsaAgentKey : RsaKey, IAgentKey
     {
         public byte[] KeyData { get; }
 

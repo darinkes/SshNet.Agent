@@ -3,7 +3,7 @@ using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
 {
-    internal class EcdsaAgentKey : EcdsaKey, IAgentKey
+    public class EcdsaAgentKey : EcdsaKey, IAgentKey
     {
         public byte[] KeyData { get; }
 

@@ -22,17 +22,9 @@ namespace SshNet.Agent
             base.Write(data);
         }
 
-        public void EncodeUInt(uint i)
-        {
-            var data = BitConverter.GetBytes(i);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(data);
-            base.Write(data);
-        }
-
         public void EncodeBignum2(byte[] data)
         {
-            EncodeUInt((uint)data.Length);
+            Write((uint)data.Length);
             base.Write(data);
         }
 
@@ -43,7 +35,7 @@ namespace SshNet.Agent
 
         public void EncodeString(byte[] str)
         {
-            EncodeUInt((uint)str.Length);
+            Write((uint)str.Length);
             base.Write(str);
         }
     }

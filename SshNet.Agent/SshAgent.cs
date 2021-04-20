@@ -7,9 +7,17 @@ using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
+    public enum SignFlag : uint
+    {
+        Default = 0,
+        Raw = 0x2000,
+    }
+
     public class SshAgent
     {
         public string SocketPath { get; }
+
+        public SignFlag SignFlag { get; set; }
 
         public SshAgent()
             : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent")
@@ -64,7 +72,7 @@ namespace SshNet.Agent
 
         internal byte[] Sign(IAgentKey key, byte[] data)
         {
-            var signature = Send(new RequestSign(key, data));
+            var signature = Send(new RequestSign(key, data, SignFlag));
             if (signature is null)
                 return new byte[0];
             return (byte[])signature;

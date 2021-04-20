@@ -1,6 +1,6 @@
 ﻿namespace SshNet.Agent.Keys
 {
-    internal interface IAgentKey
+    public interface IAgentKey
     {
         public byte[] KeyData { get; }
 
