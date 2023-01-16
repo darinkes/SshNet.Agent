@@ -3,7 +3,7 @@ using Renci.SshNet.Security;
 
 namespace SshNet.Agent
 {
-    public class PrivateKeyAgent : IPrivateKeyFile
+    public class PrivateKeyAgent : IPrivateKeySource
     {
         public HostAlgorithm HostKey { get; }
 

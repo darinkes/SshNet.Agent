@@ -49,7 +49,7 @@ namespace SshNet.Agent
             _ = Send(new RemoveIdentity(agentKey));
         }
 
-        public void AddIdentity(IPrivateKeyFile keyFile)
+        public void AddIdentity(IPrivateKeySource keyFile)
         {
             _ = Send(new AddIdentity(keyFile));
         }
