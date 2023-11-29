@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Renci.SshNet;
 
 // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5W6BcNnMuNgLYuUa18F/Ci8dzPqeIO/H333n0yv4o6
@@ -21,8 +22,11 @@ namespace SshNet.Agent.Sample
         {
             try
             {
-                // var agent = new SshAgent();
+#if NETFRAMEWORK
                 var agent = new Pageant();
+#else
+                var agent = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new Pageant() : new SshAgent();
+#endif
 
                 agent.RemoveAllIdentities();
 
@@ -41,7 +45,7 @@ namespace SshNet.Agent.Sample
 
                     try
                     {
-                        using var client = new SshClient("schwanensee", "root", keys.ToArray<IPrivateKeyFile>());
+                        using var client = new SshClient("localhost", Environment.GetEnvironmentVariable("USER"), keys.ToArray<IPrivateKeySource>());
                         client.Connect();
                         Console.WriteLine(client.RunCommand("hostname").Result.Trim());
                         Console.WriteLine($"Key {testKey} worked!");

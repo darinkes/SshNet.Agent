@@ -16,13 +16,9 @@ SshNet.Agent
 
 Works on my machine - WIP
 
-Currently builds it's own fork of [SSH.NET](https://github.com/sshnet/SSH.NET).
-
-Needs this Branch: https://github.com/darinkes/SSH.NET-1/tree/agent_auth
-
 ## .NET Frameworks
 
-* .NET 4.0
+* .NET 4.6
 * netstandard 2.0
 * netstandard 2.1
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.Extensions;
@@ -8,9 +9,9 @@ namespace SshNet.Agent.AgentMessage
 {
     internal class AddIdentity : IAgentMessage
     {
-        private readonly IPrivateKeyFile _keyFile;
+        private readonly IPrivateKeySource _keyFile;
 
-        public AddIdentity(IPrivateKeyFile keyFile)
+        public AddIdentity(IPrivateKeySource keyFile)
         {
             _keyFile = keyFile;
         }
@@ -20,7 +21,7 @@ namespace SshNet.Agent.AgentMessage
             using var keyStream = new MemoryStream();
             using var keyWriter = new AgentWriter(keyStream);
 
-            var key = ((KeyHostAlgorithm) _keyFile.HostKey).Key;
+            var key = ((KeyHostAlgorithm) _keyFile.HostKeyAlgorithms.First()).Key;
             keyWriter.EncodeString(key.ToString());
             switch (key.ToString())
             {

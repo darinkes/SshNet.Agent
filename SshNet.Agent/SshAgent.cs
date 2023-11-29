@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.AgentMessage;
@@ -44,12 +45,12 @@ namespace SshNet.Agent
 
         public void RemoveIdentity(PrivateKeyAgent privateAgentKey)
         {
-            if (!(((KeyHostAlgorithm)privateAgentKey.HostKey).Key is IAgentKey agentKey))
+            if (((KeyHostAlgorithm)privateAgentKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
                 throw new ArgumentException("Just AgentKeys can be removed");
             _ = Send(new RemoveIdentity(agentKey));
         }
 
-        public void AddIdentity(IPrivateKeyFile keyFile)
+        public void AddIdentity(IPrivateKeySource keyFile)
         {
             _ = Send(new AddIdentity(keyFile));
         }
@@ -58,7 +59,7 @@ namespace SshNet.Agent
         {
             var signature = Send(new RequestSign(key, data));
             if (signature is null)
-                return new byte[0];
+                return Array.Empty<byte>();
             return (byte[])signature;
         }
 

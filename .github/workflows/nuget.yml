@@ -11,12 +11,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-      with:
-        submodules: recursive
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 7.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -25,7 +23,7 @@ jobs:
       run: dotnet test --no-build --verbosity normal
     - name: publish on version change
       id: publish_nuget
-      uses: rohith/publish-nuget@v2
+      uses: alirezanet/publish-nuget@v3.1.0
       with:
         # Filepath of the project to be packaged, relative to root of repository
         PROJECT_FILE_PATH: SshNet.Agent/SshNet.Agent.csproj

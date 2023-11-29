@@ -18,7 +18,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.x
+        dotnet-version: 7.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -29,5 +29,5 @@ jobs:
       with:
         name: sample-windows
         path: |
-          SshNet.Agent.Sample/bin/Debug/net40/*
-          SshNet.Agent.Sample/bin/Debug/net5.0/*
+          SshNet.Agent.Sample/bin/Debug/net462/*
+          SshNet.Agent.Sample/bin/Debug/net7.0/*
