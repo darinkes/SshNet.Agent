@@ -1,5 +1,4 @@
-﻿using Renci.SshNet.Common;
-using Renci.SshNet.Security;
+﻿using Renci.SshNet.Security;
 using Renci.SshNet.Security.Cryptography;
 
 namespace SshNet.Agent.Keys
@@ -10,19 +9,16 @@ namespace SshNet.Agent.Keys
 
         public SshAgent Agent { get; }
 
-        private AgentSignature? _signature;
+        private DigitalSignature? _signature;
         protected override DigitalSignature DigitalSignature
         {
-            get { return _signature ??= new AgentSignature(Agent, this); }
+            get { return _signature ??= new RsaAgentSignature(Agent, this); }
         }
 
-        public RsaAgentKey(BigInteger modulus, BigInteger exponent, SshAgent agent, byte[] keyData)
+        public RsaAgentKey(SshAgent agent, byte[] keyData) : base(new SshKeyData(keyData))
         {
             KeyData = keyData;
             Agent = agent;
-            _privateKey = new BigInteger[2];
-            _privateKey[0] = modulus;
-            _privateKey[1] = exponent;
         }
     }
 }

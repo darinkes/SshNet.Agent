@@ -5,12 +5,12 @@
         <LangVersion>9</LangVersion>
         <Nullable>enable</Nullable>
         <PackageId>SshNet.Agent</PackageId>
-        <Version>0.4.0-beta</Version>
+        <Version>2024.0.0-beta</Version>
         <PackageVersion>$(Version)</PackageVersion>
         <PackageTags>ssh;scp;sftp</PackageTags>
         <Description>SSH.NET Extension to authenticate via OpenSSH Agent and PuTTY Pageant</Description>
         <PackageReleaseNotes>https://github.com/darinkes/SshNet.Agent/releases/tag/$(PackageVersion)</PackageReleaseNotes>
-        <Copyright>Copyright (c) 2021 - 2023 Stefan Rinkes</Copyright>
+        <Copyright>Copyright (c) 2021 - 2024 Stefan Rinkes</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/darinkes/SshNet.Agent/</PackageProjectUrl>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
@@ -19,6 +19,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="SSH.NET" Version="2023.0.0" />
+        <PackageReference Include="SSH.NET" Version="2024.0.0" />
     </ItemGroup>
 </Project>

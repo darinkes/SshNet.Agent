@@ -15,8 +15,7 @@ namespace SshNet.Agent.Keys
             get { return _signature ??= new AgentSignature(Agent, this); }
         }
 
-        public EcdsaAgentKey(string curve, byte[] uncompressedCoords, SshAgent agent, byte[] keyData)
-            : base(curve, uncompressedCoords, null)
+        public EcdsaAgentKey(SshAgent agent, byte[] keyData) : base(new SshKeyData(keyData))
         {
             KeyData = keyData;
             Agent = agent;

@@ -15,7 +15,7 @@ namespace SshNet.Agent.Keys
             get { return _signature ??= new AgentSignature(Agent, this); }
         }
 
-        public ED25519AgentKey(byte[] pk, SshAgent agent, byte[] keyData) : base(pk)
+        public ED25519AgentKey(SshAgent agent, byte[] keyData) : base(new SshKeyData(keyData))
         {
             Agent = agent;
             KeyData = keyData;

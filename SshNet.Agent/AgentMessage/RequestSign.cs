@@ -8,11 +8,13 @@ namespace SshNet.Agent.AgentMessage
     {
         private readonly IAgentKey _key;
         private readonly byte[] _data;
+        private readonly uint _flags;
 
-        public RequestSign(IAgentKey key, byte[] data)
+        public RequestSign(IAgentKey key, byte[] data, uint flags = 0)
         {
             _key = key;
             _data = data;
+            _flags = flags;
         }
 
         public void To(AgentWriter writer)
@@ -21,7 +23,7 @@ namespace SshNet.Agent.AgentMessage
             using var signWriter = new AgentWriter(signStream);
             signWriter.EncodeString(_key.KeyData);
             signWriter.EncodeString(_data);
-            signWriter.Write((uint)0);
+            signWriter.Write(_flags);
             var signData = signStream.ToArray();
 
             writer.Write((uint)(1 + signData.Length));
