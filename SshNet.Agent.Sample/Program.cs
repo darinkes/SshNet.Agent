@@ -25,7 +25,7 @@ namespace SshNet.Agent.Sample
 #if NETFRAMEWORK
                 var agent = new Pageant();
 #else
-                var agent = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? new Pageant() : new SshAgent();
+                var agent = new SshAgent();
 #endif
 
                 agent.RemoveAllIdentities();
@@ -45,7 +45,7 @@ namespace SshNet.Agent.Sample
 
                     try
                     {
-                        using var client = new SshClient("localhost", Environment.GetEnvironmentVariable("USER"), keys.ToArray<IPrivateKeySource>());
+                        using var client = new SshClient("localhost", Environment.GetEnvironmentVariable("USER") ?? Environment.GetEnvironmentVariable("USERNAME"), keys.ToArray<IPrivateKeySource>());
                         client.Connect();
                         Console.WriteLine(client.RunCommand("hostname").Result.Trim());
                         Console.WriteLine($"Key {testKey} worked!");

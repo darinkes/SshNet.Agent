@@ -22,12 +22,12 @@ namespace SshNet.Agent
             _socketPath = socketPath;
         }
 
-        public PrivateKeyAgent[] RequestIdentities()
+        public SshAgentPrivateKey[] RequestIdentities()
         {
             var list = Send(new RequestIdentities(this));
             if (list is null)
-                return new PrivateKeyAgent[] {};
-            return (PrivateKeyAgent[])list;
+                return new SshAgentPrivateKey[] {};
+            return (SshAgentPrivateKey[])list;
         }
 
         public void RemoveAllIdentities()
@@ -35,7 +35,7 @@ namespace SshNet.Agent
             _ = Send(new RemoveIdentity());
         }
 
-        public void RemoveIdentities(IEnumerable<PrivateKeyAgent> privateKeys)
+        public void RemoveIdentities(IEnumerable<SshAgentPrivateKey> privateKeys)
         {
             foreach (var privateKey in privateKeys)
             {
@@ -43,9 +43,9 @@ namespace SshNet.Agent
             }
         }
 
-        public void RemoveIdentity(PrivateKeyAgent privateAgentKey)
+        public void RemoveIdentity(SshAgentPrivateKey sshAgentPrivateKey)
         {
-            if (((KeyHostAlgorithm)privateAgentKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
+            if (((KeyHostAlgorithm)sshAgentPrivateKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
                 throw new ArgumentException("Just AgentKeys can be removed");
             _ = Send(new RemoveIdentity(agentKey));
         }
@@ -55,9 +55,9 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile));
         }
 
-        internal byte[] Sign(IAgentKey key, byte[] data)
+        internal byte[] Sign(IAgentKey key, byte[] data, uint flags = 0)
         {
-            var signature = Send(new RequestSign(key, data));
+            var signature = Send(new RequestSign(key, data, flags));
             if (signature is null)
                 return Array.Empty<byte>();
             return (byte[])signature;

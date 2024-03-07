@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.Keys;
 
@@ -29,7 +28,7 @@ namespace SshNet.Agent.AgentMessage
             if (answer != AgentMessageType.SSH2_AGENT_IDENTITIES_ANSWER)
                 throw new Exception($"Wrong Answer {answer}");
 
-            var keys = new List<PrivateKeyAgent>();
+            var keys = new List<SshAgentPrivateKey>();
             var numKeys = reader.ReadUInt32();
             var i = 0;
             while (i < numKeys)
@@ -43,28 +42,23 @@ namespace SshNet.Agent.AgentMessage
                 switch (keyType)
                 {
                     case "ssh-rsa":
-                        var exponent = keyReader.ReadBignum();
-                        var modulus = keyReader.ReadBignum();
-                        key = new RsaAgentKey(modulus, exponent, _agent, keyData);
+                        key = new RsaAgentKey(_agent, keyData);
                         break;
                     case "ecdsa-sha2-nistp256":
                         // Fallthrough
                     case "ecdsa-sha2-nistp384":
                         // Fallthrough
                     case "ecdsa-sha2-nistp521":
-                        var curve = keyReader.ReadString();
-                        var q = keyReader.ReadBignum2();
-                        key = new EcdsaAgentKey(curve, q, _agent, keyData);
+                        key = new EcdsaAgentKey(_agent, keyData);
                         break;
                     case "ssh-ed25519":
-                        var pK = keyReader.ReadBignum2();
-                        key = new ED25519AgentKey(pK, _agent, keyData);
+                        key = new ED25519AgentKey(_agent, keyData);
                         break;
                     default:
                         throw new Exception($"Unsupported KeyType {keyType}");
                 }
                 key.Comment = reader.ReadString();
-                keys.Add(new PrivateKeyAgent(key));
+                keys.Add(new SshAgentPrivateKey(_agent, key));
                 i++;
             }
 

@@ -7,7 +7,6 @@ SshNet.Agent
 [![NuGet](https://img.shields.io/nuget/v/SshNet.Agent.svg?style=flat)](https://www.nuget.org/packages/SshNet.Agent)
 ![Nuget](https://img.shields.io/nuget/dt/SshNet.Agent)
 
-![CodeQL](https://github.com/darinkes/SshNet.Agent/workflows/CodeQL/badge.svg)
 ![.NET-Ubuntu](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Ubuntu/badge.svg)
 ![.NET-Windows](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Windows/badge.svg)
 ![NuGet](https://github.com/darinkes/SshNet.Agent/workflows/NuGet/badge.svg)
