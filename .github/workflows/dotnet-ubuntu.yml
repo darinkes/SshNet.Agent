@@ -18,7 +18,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 7.0.x
+        dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
@@ -29,4 +29,4 @@ jobs:
       with:
         name: Sample-ubuntu
         path: |
-          SshNet.Agent.Sample/bin/Debug/net7.0/*
+          SshNet.Agent.Sample/bin/Debug/net8.0/*
