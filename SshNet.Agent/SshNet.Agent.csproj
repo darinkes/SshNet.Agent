@@ -5,7 +5,7 @@
         <LangVersion>9</LangVersion>
         <Nullable>enable</Nullable>
         <PackageId>SshNet.Agent</PackageId>
-        <Version>2024.0.0-beta</Version>
+        <Version>2024.0.0.1-beta</Version>
         <PackageVersion>$(Version)</PackageVersion>
         <PackageTags>ssh;scp;sftp</PackageTags>
         <Description>SSH.NET Extension to authenticate via OpenSSH Agent and PuTTY Pageant</Description>
