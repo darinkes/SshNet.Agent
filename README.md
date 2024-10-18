@@ -11,10 +11,6 @@ SshNet.Agent
 ![.NET-Windows](https://github.com/darinkes/SshNet.Agent/workflows/.NET-Windows/badge.svg)
 ![NuGet](https://github.com/darinkes/SshNet.Agent/workflows/NuGet/badge.svg)
 
-## Status
-
-Works on my machine - WIP
-
 ## .NET Frameworks
 
 * .NET 4.8
