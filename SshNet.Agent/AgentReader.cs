@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using Renci.SshNet.Common;
+using System.Numerics;
 using SshNet.Agent.Extensions;
 
 namespace SshNet.Agent
