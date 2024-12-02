@@ -1,5 +1,5 @@
 ﻿using System;
-using Renci.SshNet.Common;
+using System.Numerics;
 
 namespace SshNet.Agent.Extensions
 {
