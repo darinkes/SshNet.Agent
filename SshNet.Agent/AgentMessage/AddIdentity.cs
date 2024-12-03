@@ -28,7 +28,10 @@ namespace SshNet.Agent.AgentMessage
                 case "ssh-ed25519":
                     var ed25519 = (ED25519Key)key;
                     keyWriter.EncodeBignum2(ed25519.PublicKey);
-                    keyWriter.EncodeBignum2(ed25519.PrivateKey);
+                    var privateKey = new byte[ed25519.PrivateKey.Length + ed25519.PublicKey.Length];
+                    Buffer.BlockCopy(ed25519.PrivateKey, 0, privateKey, 0, ed25519.PrivateKey.Length);
+                    Buffer.BlockCopy(ed25519.PublicKey, 0, privateKey, ed25519.PrivateKey.Length, ed25519.PublicKey.Length);
+                    keyWriter.EncodeBignum2(privateKey);
                     break;
                 case "ssh-rsa":
                     var rsa = (RsaKey)key;
