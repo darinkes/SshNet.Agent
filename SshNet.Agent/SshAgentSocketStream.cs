@@ -51,20 +51,22 @@ namespace SshNet.Agent
             set => _stream.Position = value;
         }
 
-        public SshAgentSocketStream(string socketPath)
+        public SshAgentSocketStream(string socketPath, TimeSpan timeout)
         {
 #if NETSTANDARD2_1
             if (File.Exists(socketPath) || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var ep = new UnixDomainSocketEndPoint(socketPath);
                 _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+                _socket.ReceiveTimeout = timeout.Milliseconds;
+                _socket.SendTimeout = timeout.Milliseconds;
                 _socket.Connect(ep);
                 _stream = new NetworkStream(_socket);
                 return;
             }
 #endif
             _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
-            _pipe.Connect();
+            _pipe.Connect(timeout.Milliseconds);
             _stream = _pipe;
         }
 

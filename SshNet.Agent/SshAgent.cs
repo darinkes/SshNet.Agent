@@ -11,15 +11,17 @@ namespace SshNet.Agent
     public class SshAgent
     {
         private readonly string _socketPath;
+        private readonly TimeSpan _timeout;
 
-        public SshAgent()
-            : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent")
+        public SshAgent(TimeSpan? timeout = null)
+            : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent", timeout)
         {
         }
 
-        public SshAgent(string socketPath)
+        public SshAgent(string socketPath, TimeSpan? timeout)
         {
             _socketPath = socketPath;
+            _timeout = timeout ?? TimeSpan.FromSeconds(10);
         }
 
         public SshAgentPrivateKey[] RequestIdentities()
@@ -65,7 +67,7 @@ namespace SshNet.Agent
 
         internal virtual object? Send(IAgentMessage message)
         {
-            using var socketStream = new SshAgentSocketStream(_socketPath);
+            using var socketStream = new SshAgentSocketStream(_socketPath, _timeout);
             using var writer = new AgentWriter(socketStream);
             using var reader = new AgentReader(socketStream);
 
