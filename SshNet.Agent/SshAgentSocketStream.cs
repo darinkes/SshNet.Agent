@@ -58,15 +58,15 @@ namespace SshNet.Agent
             {
                 var ep = new UnixDomainSocketEndPoint(socketPath);
                 _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-                _socket.ReceiveTimeout = timeout.Milliseconds;
-                _socket.SendTimeout = timeout.Milliseconds;
+                _socket.ReceiveTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
+                _socket.SendTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
                 _socket.Connect(ep);
                 _stream = new NetworkStream(_socket);
                 return;
             }
 #endif
             _pipe = new NamedPipeClientStream(".", socketPath, PipeDirection.InOut);
-            _pipe.Connect(timeout.Milliseconds);
+            _pipe.Connect(Convert.ToInt32(timeout.TotalMilliseconds));
             _stream = _pipe;
         }
 
