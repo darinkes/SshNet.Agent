@@ -20,6 +20,10 @@ namespace SshNet.Agent.Tests
         public const string RsaUnauthorizedB = "rsa_b";
         public const string RsaUnauthorizedC = "rsa_c";
 
+        /// <summary>Certificates signed by the checked-in throwaway CA (test_ca), principal "test".</summary>
+        public const string Ed25519Cert = "ed25519_puttygen-cert";
+        public const string RsaCert = "rsa_a-cert";
+
         /// <summary>The keys the test SSH server accepts (see SshServerFixture).</summary>
         public static readonly string[] Authorized = { Ed25519Puttygen, Ed25519ZeroLead, Rsa, Ecdsa };
 
@@ -36,9 +40,21 @@ namespace SshNet.Agent.Tests
 
         public static PrivateKeyFile PrivateKey(string name)
         {
-            var keyFile = new PrivateKeyFile(PrivateKeyPath(name));
-            ((KeyHostAlgorithm)keyFile.HostKeyAlgorithms.First()).Key.Comment = "sshnet-agent-test-" + name;
+            // "<key>-cert" loads the private key of <key> together with its certificate
+            var keyFile = name.EndsWith("-cert")
+                ? new PrivateKeyFile(PrivateKeyPath(name.Substring(0, name.Length - 5)), null, PublicKeyPath(name))
+                : new PrivateKeyFile(PrivateKeyPath(name));
+            Key(keyFile).Comment = "sshnet-agent-test-" + name;
             return keyFile;
+        }
+
+        private static Key Key(PrivateKeyFile keyFile)
+        {
+            return keyFile.HostKeyAlgorithms.First() switch
+            {
+                CertificateHostAlgorithm certificateAlgorithm => certificateAlgorithm.Key,
+                var algorithm => ((KeyHostAlgorithm)algorithm).Key,
+            };
         }
 
         public static SshAgentPrivateKey? Find(SshAgentPrivateKey[] identities, string name)

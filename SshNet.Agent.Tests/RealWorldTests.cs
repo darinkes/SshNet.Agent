@@ -140,6 +140,23 @@ namespace SshNet.Agent.Tests
         }
 
         /// <summary>
+        /// An OpenSSH certificate as the agent identity: the certificate and the
+        /// private key are added to a real agent, the server trusts only the CA
+        /// (TrustedUserCAKeys), not the key itself.
+        /// </summary>
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void CertificateIdentity_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            _server.SkipUnlessTrustsTestCa();
+            using var agent = TestAgent.Start(kind, TestKeys.Ed25519Cert);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Ed25519Cert)));
+        }
+
+        /// <summary>
         /// Regression test for GitHub issue #13: the authorized ed25519 key sits
         /// behind two RSA keys the server does not accept. Every offered host key
         /// algorithm costs one of the server's MaxAuthTries (default 6), and each
