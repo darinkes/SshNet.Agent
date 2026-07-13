@@ -30,10 +30,10 @@ namespace SshNet.Agent.AgentMessage
 
             var keys = new List<SshAgentPrivateKey>();
             var numKeys = reader.ReadUInt32();
-            var i = 0;
-            while (i < numKeys)
+            for (var i = 0; i < numKeys; i++)
             {
                 var keyData = reader.ReadStringAsBytes();
+                var comment = reader.ReadString();
                 using var keyStream = new MemoryStream(keyData);
                 using var keyReader = new AgentReader(keyStream);
 
@@ -55,11 +55,13 @@ namespace SshNet.Agent.AgentMessage
                         key = new ED25519AgentKey(_agent, keyData);
                         break;
                     default:
-                        throw new Exception($"Unsupported KeyType {keyType}");
+                        // an agent may also hold key types this library cannot use, e.g.
+                        // FIDO keys (sk-*) or certificates (*-cert-v01@openssh.com);
+                        // leave those to other clients instead of failing the whole list
+                        continue;
                 }
-                key.Comment = reader.ReadString();
+                key.Comment = comment;
                 keys.Add(new SshAgentPrivateKey(_agent, key));
-                i++;
             }
 
             return keys.ToArray();
