@@ -16,8 +16,9 @@ SshNet.Agent
 * .NET 4.8
 * netstandard 2.0
 * netstandard 2.1
+* .NET 8.0
 
-Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to use ssh-agent on Linux.
+Note: Only the netstandard 2.1 and .NET 8.0 builds contain support for Unix Domain Sockets to use ssh-agent on Linux.
 
 ## Keys
 * ssh-ed25519
