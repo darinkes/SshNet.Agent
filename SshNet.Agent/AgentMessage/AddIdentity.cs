@@ -53,6 +53,8 @@ namespace SshNet.Agent.AgentMessage
                     keyWriter.EncodeString(publicKey[1].ToByteArray().Reverse());
                     keyWriter.EncodeBignum2(ecdsa.PrivateKey.ToBigInteger2().ToByteArray().Reverse());
                     break;
+                default:
+                    throw new NotSupportedException($"Adding keys of type {key} is not supported");
             }
             // comment
             keyWriter.EncodeString(key.Comment ?? "");
@@ -68,7 +70,7 @@ namespace SshNet.Agent.AgentMessage
             _ = reader.ReadUInt32(); // msglen
             var answer = (AgentMessageType)reader.ReadByte();
             if (answer != AgentMessageType.SSH_AGENT_SUCCESS)
-                throw new Exception($"Wrong Answer {answer}");
+                throw new SshAgentFailureException($"The agent answered {answer} instead of SSH_AGENT_SUCCESS");
             return null;
         }
     }
