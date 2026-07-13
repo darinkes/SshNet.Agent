@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.IO.Pipes;
+using System.Threading;
 using System.Threading.Tasks;
 #if NETSTANDARD2_1
 using System.Runtime.InteropServices;
@@ -67,6 +68,33 @@ namespace SshNet.Agent
             task.GetAwaiter().GetResult(); // surfaces a fault unwrapped
         }
 
+        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            var read = _stream.ReadAsync(buffer, offset, count, cancellationToken);
+            await WaitWithTimeoutAsync(read, cancellationToken).ConfigureAwait(false);
+            return read.Result;
+        }
+
+        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            await WaitWithTimeoutAsync(_stream.WriteAsync(buffer, offset, count, cancellationToken), cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task WaitWithTimeoutAsync(Task task, CancellationToken cancellationToken)
+        {
+            using var stopDelay = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            var winner = await Task.WhenAny(task, Task.Delay(_timeout, stopDelay.Token)).ConfigureAwait(false);
+            if (winner != task)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                // the pending operation is aborted by Dispose, run by the owner
+                // when this exception unwinds its using statement
+                throw new TimeoutException($"The ssh-agent did not answer within {_timeout.TotalSeconds:0.#}s");
+            }
+            stopDelay.Cancel();
+            await task.ConfigureAwait(false);
+        }
+
         public override bool CanRead => _stream.CanRead;
         public override bool CanSeek => _stream.CanSeek;
         public override bool CanWrite => _stream.CanWrite;
@@ -81,23 +109,95 @@ namespace SshNet.Agent
         {
             _timeout = timeout;
 #if NETSTANDARD2_1
-            // everything on unix is a unix domain socket; on Windows only paths
-            // that exist as files are (e.g. WSL sockets), never pipe paths
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
-                (!IsPipePath(socketPath) && File.Exists(socketPath)))
+            if (UseUnixSocket(socketPath))
             {
-                var ep = new UnixDomainSocketEndPoint(socketPath);
-                _socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
-                _socket.ReceiveTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
-                _socket.SendTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
-                _socket.Connect(ep);
+                _socket = CreateUnixSocket(timeout);
+                _socket.Connect(new UnixDomainSocketEndPoint(socketPath));
                 _stream = new NetworkStream(_socket);
                 return;
             }
 #endif
-            _pipe = new NamedPipeClientStream(".", PipeName(socketPath), PipeDirection.InOut, PipeOptions.Asynchronous);
+            _pipe = CreatePipe(socketPath);
             _pipe.Connect(Convert.ToInt32(timeout.TotalMilliseconds));
             _stream = _pipe;
+        }
+
+#if NETSTANDARD2_1
+        private SshAgentSocketStream(Socket socket, TimeSpan timeout)
+        {
+            _socket = socket;
+            _stream = new NetworkStream(socket);
+            _timeout = timeout;
+        }
+#endif
+
+        private SshAgentSocketStream(NamedPipeClientStream pipe, TimeSpan timeout)
+        {
+            _pipe = pipe;
+            _stream = pipe;
+            _timeout = timeout;
+        }
+
+        public static async Task<SshAgentSocketStream> ConnectAsync(string socketPath, TimeSpan timeout, CancellationToken cancellationToken)
+        {
+#if NETSTANDARD2_1
+            if (UseUnixSocket(socketPath))
+            {
+                var socket = CreateUnixSocket(timeout);
+                try
+                {
+                    var connect = socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath));
+                    if (await Task.WhenAny(connect, Task.Delay(timeout, cancellationToken)).ConfigureAwait(false) != connect)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        throw new TimeoutException($"Could not connect to the ssh-agent within {timeout.TotalSeconds:0.#}s");
+                    }
+                    await connect.ConfigureAwait(false);
+                }
+                catch
+                {
+                    socket.Dispose();
+                    throw;
+                }
+                return new SshAgentSocketStream(socket, timeout);
+            }
+#endif
+            var pipe = CreatePipe(socketPath);
+            try
+            {
+                await pipe.ConnectAsync(Convert.ToInt32(timeout.TotalMilliseconds), cancellationToken).ConfigureAwait(false);
+            }
+            catch
+            {
+                pipe.Dispose();
+                throw;
+            }
+            return new SshAgentSocketStream(pipe, timeout);
+        }
+
+#if NETSTANDARD2_1
+        /// <summary>
+        /// Everything on unix is a unix domain socket; on Windows only paths
+        /// that exist as files are (e.g. WSL sockets), never pipe paths.
+        /// </summary>
+        private static bool UseUnixSocket(string socketPath)
+        {
+            return !RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ||
+                   (!IsPipePath(socketPath) && File.Exists(socketPath));
+        }
+
+        private static Socket CreateUnixSocket(TimeSpan timeout)
+        {
+            var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.IP);
+            socket.ReceiveTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
+            socket.SendTimeout = Convert.ToInt32(timeout.TotalMilliseconds);
+            return socket;
+        }
+#endif
+
+        private static NamedPipeClientStream CreatePipe(string socketPath)
+        {
+            return new NamedPipeClientStream(".", PipeName(socketPath), PipeDirection.InOut, PipeOptions.Asynchronous);
         }
 
         private static bool IsPipePath(string socketPath)
