@@ -13,6 +13,13 @@ namespace SshNet.Agent
         private readonly string _socketPath;
         private readonly TimeSpan _timeout;
 
+        /// <summary>
+        /// Also offer the legacy ssh-rsa (SHA-1) algorithm for RSA identities, after
+        /// rsa-sha2-512 and rsa-sha2-256. Only needed for servers without RFC 8332
+        /// support (OpenSSH older than 7.2).
+        /// </summary>
+        public bool IncludeLegacySshRsa { get; set; }
+
         public SshAgent(TimeSpan? timeout = null)
             : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent", timeout)
         {
