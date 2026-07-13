@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using Renci.SshNet;
@@ -31,6 +32,27 @@ namespace SshNet.Agent
             }
 
             _hostAlgorithms.Add(new KeyHostAlgorithm(key.ToString(), key));
+        }
+
+        public SshAgentPrivateKey(SshAgent agent, Certificate certificate, byte[] certificateData)
+        {
+            Key = certificate.Key;
+
+            // signing echoes the whole certificate blob back to the agent
+            var identity = new CertificateAgentIdentity(agent, certificateData);
+
+            if (certificate.Name == "ssh-rsa-cert-v01@openssh.com")
+            {
+                // RFC 8332: the rsa-sha2-*-cert algorithms use the ssh-rsa-cert
+                // blob format, so only the offered name and sign flags differ
+                _hostAlgorithms.Add(new CertificateHostAlgorithm("rsa-sha2-512-cert-v01@openssh.com", Key, certificate, new RsaAgentSignature(agent, identity, HashAlgorithmName.SHA512)));
+                _hostAlgorithms.Add(new CertificateHostAlgorithm("rsa-sha2-256-cert-v01@openssh.com", Key, certificate, new RsaAgentSignature(agent, identity, HashAlgorithmName.SHA256)));
+                if (agent.IncludeLegacySshRsa)
+                    _hostAlgorithms.Add(new CertificateHostAlgorithm(certificate.Name, Key, certificate, new RsaAgentSignature(agent, identity)));
+                return;
+            }
+
+            _hostAlgorithms.Add(new CertificateHostAlgorithm(certificate.Name, Key, certificate, new AgentSignature(agent, identity)));
         }
     }
 }

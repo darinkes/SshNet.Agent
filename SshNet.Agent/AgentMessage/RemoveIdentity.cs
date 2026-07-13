@@ -1,25 +1,24 @@
 ﻿using System;
 using System.IO;
-using SshNet.Agent.Keys;
 
 namespace SshNet.Agent.AgentMessage
 {
     internal class RemoveIdentity : IAgentMessage
     {
-        private readonly IAgentKey? _agentKey;
+        private readonly byte[]? _keyBlob;
 
         public RemoveIdentity()
         {
         }
 
-        public RemoveIdentity(IAgentKey agentKey)
+        public RemoveIdentity(byte[] keyBlob)
         {
-            _agentKey = agentKey;
+            _keyBlob = keyBlob;
         }
 
         public void To(AgentWriter writer)
         {
-            if (_agentKey is null)
+            if (_keyBlob is null)
             {
                 writer.Write((uint) 1);
                 writer.Write((byte) AgentMessageType.SSH2_AGENTC_REMOVE_ALL_IDENTITIES);
@@ -28,7 +27,7 @@ namespace SshNet.Agent.AgentMessage
 
             using var keyStream = new MemoryStream();
             using var keyWriter = new AgentWriter(keyStream);
-            keyWriter.EncodeString(_agentKey.KeyData);
+            keyWriter.EncodeString(_keyBlob);
             var keyData = keyStream.ToArray();
 
             writer.Write((uint) (1 + keyData.Length));

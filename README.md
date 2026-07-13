@@ -41,6 +41,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 ## Features
 
 - Auth
+- Auth with OpenSSH Certificates
 - Adding Keys
 - Adding Keys with Constraints (lifetime, confirm)
 - Getting Keys

@@ -9,12 +9,12 @@ namespace SshNet.Agent.Keys
         private readonly IAgentKey _agentKey;
         private readonly HashAlgorithmName _hashAlgorithmName;
 
-        public RsaAgentSignature(SshAgent agent, RsaAgentKey agentKey)
+        public RsaAgentSignature(SshAgent agent, IAgentKey agentKey)
             : this(agent, agentKey, HashAlgorithmName.SHA1)
         {
         }
 
-        public RsaAgentSignature(SshAgent agent, RsaAgentKey agentKey, HashAlgorithmName hashAlgorithmName)
+        public RsaAgentSignature(SshAgent agent, IAgentKey agentKey, HashAlgorithmName hashAlgorithmName)
         {
             _agent = agent;
             _agentKey = agentKey;
