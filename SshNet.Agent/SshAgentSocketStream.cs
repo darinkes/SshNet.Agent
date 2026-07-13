@@ -114,20 +114,11 @@ namespace SshNet.Agent
             return IsPipePath(socketPath) ? socketPath.Substring(PipePrefix.Length) : socketPath;
         }
 
-        #region IDisposable
         private bool _disposed;
-        public new void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
-        private new void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (_disposed)
-                return;
-
-            if (disposing)
+            if (!_disposed && disposing)
             {
                 _stream.Dispose();
 #if NETSTANDARD2_1
@@ -137,7 +128,7 @@ namespace SshNet.Agent
             }
 
             _disposed = true;
+            base.Dispose(disposing);
         }
-        #endregion
     }
 }

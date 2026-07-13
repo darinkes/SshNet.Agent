@@ -5,18 +5,19 @@ using System.Runtime.InteropServices;
 
 namespace SshNet.Agent
 {
-    public class PageantSocketStream : Stream, IDisposable
+    internal class PageantSocketStream : Stream
     {
         private const int AgentMaxMsglen = 8192;
         private const long AgentCopydataId = 0x804e50ba;
         private const int WmCopydata = 0x004A;
 
-        private readonly string _tempFile;
+        private readonly string _mapName;
         private readonly MemoryMappedFile _memoryMappedFile;
         private readonly Stream _stream;
         private readonly Copydatastruct _copyData;
         private readonly IntPtr _copyDataPtr;
 
+        [StructLayout(LayoutKind.Sequential)]
         private struct Copydatastruct {
             public IntPtr DwData;
             public int CbData;
@@ -66,8 +67,8 @@ namespace SshNet.Agent
 
         public PageantSocketStream()
         {
-            _tempFile = Path.GetRandomFileName();
-            _memoryMappedFile = MemoryMappedFile.CreateNew(_tempFile, AgentMaxMsglen);
+            _mapName = Path.GetRandomFileName();
+            _memoryMappedFile = MemoryMappedFile.CreateNew(_mapName, AgentMaxMsglen);
             _stream = _memoryMappedFile.CreateViewStream();
 
             _copyData = new Copydatastruct
@@ -75,8 +76,8 @@ namespace SshNet.Agent
                 DwData = IntPtr.Size == 4
                     ? new IntPtr(unchecked((int) AgentCopydataId))
                     : new IntPtr(AgentCopydataId),
-                CbData = _tempFile.Length + 1,
-                LpData = Marshal.StringToCoTaskMemAnsi(_tempFile)
+                CbData = _mapName.Length + 1,
+                LpData = Marshal.StringToHGlobalAnsi(_mapName)
             };
 
             _copyDataPtr = Marshal.AllocHGlobal(Marshal.SizeOf(_copyData));
@@ -100,31 +101,20 @@ namespace SshNet.Agent
             return FindWindow("Pageant", "Pageant");
         }
 
-        #region IDisposable
         private bool _disposed;
-        public new void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
 
-        private new void Dispose(bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (_disposed)
-                return;
-
-            if (disposing)
+            if (!_disposed && disposing)
             {
                 _stream.Dispose();
                 _memoryMappedFile.Dispose();
                 Marshal.FreeHGlobal(_copyData.LpData);
                 Marshal.FreeHGlobal(_copyDataPtr);
-                if (File.Exists(_tempFile))
-                    File.Delete(_tempFile);
             }
 
             _disposed = true;
+            base.Dispose(disposing);
         }
-        #endregion
     }
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Text;
 
@@ -6,11 +6,7 @@ namespace SshNet.Agent
 {
     internal class AgentWriter : BinaryWriter
     {
-#if NETSTANDARD
-        public AgentWriter(Stream stream) : base(stream, Encoding.Default, true)
-#else
-        public AgentWriter(Stream stream) : base(stream, Encoding.Default)
-#endif
+        public AgentWriter(Stream stream) : base(stream, Encoding.UTF8, leaveOpen: true)
         {
         }
 
@@ -22,28 +18,19 @@ namespace SshNet.Agent
             base.Write(data);
         }
 
-        public void EncodeUInt(uint i)
-        {
-            var data = BitConverter.GetBytes(i);
-            if (BitConverter.IsLittleEndian)
-                Array.Reverse(data);
-            base.Write(data);
-        }
-
         public void EncodeBignum2(byte[] data)
         {
-            EncodeUInt((uint)data.Length);
-            base.Write(data);
+            EncodeString(data);
         }
 
         public void EncodeString(string str)
         {
-            EncodeString(Encoding.ASCII.GetBytes(str));
+            EncodeString(Encoding.UTF8.GetBytes(str));
         }
 
         public void EncodeString(byte[] str)
         {
-            EncodeUInt((uint)str.Length);
+            Write((uint)str.Length);
             base.Write(str);
         }
     }
