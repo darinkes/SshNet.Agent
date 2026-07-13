@@ -12,20 +12,34 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v5
       with:
         submodules: recursive
     - name: Setup .NET
-      uses: actions/setup-dotnet@v1
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Setup Pageant, ssh-agent and sshd for the tests
+      shell: pwsh
+      run: |
+        choco install putty.portable -y --no-progress
+        Set-Service ssh-agent -StartupType Manual
+        Start-Service ssh-agent
+        Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+        $authorizedKeys = 'C:\ProgramData\ssh\administrators_authorized_keys'
+        Get-Content SshNet.Agent.Tests\TestKeys\ed25519_puttygen.pub, SshNet.Agent.Tests\TestKeys\ed25519_zerolead.pub, SshNet.Agent.Tests\TestKeys\rsa_a.pub, SshNet.Agent.Tests\TestKeys\ecdsa_256.pub | Set-Content $authorizedKeys
+        icacls $authorizedKeys /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F'
+        Start-Service sshd
+        "SSHNET_AGENT_SERVER=127.0.0.1:22:$env:UserName" | Out-File -FilePath $env:GITHUB_ENV -Append
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - uses: actions/upload-artifact@v4
+      env:
+        SSHNET_AGENT_TESTS_REQUIRED: OpenSsh,Pageant,Server
+    - uses: actions/upload-artifact@v5
       with:
         name: sample-windows
         path: |

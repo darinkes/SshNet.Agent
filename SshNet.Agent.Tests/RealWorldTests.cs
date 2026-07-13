@@ -1,0 +1,95 @@
+using Renci.SshNet;
+using Xunit;
+
+namespace SshNet.Agent.Tests
+{
+    /// <summary>
+    /// Real-world tests: keys served by a real agent (OpenSSH ssh-agent or PuTTY
+    /// Pageant) are used to authenticate against a real OpenSSH server. Tests skip
+    /// when the agent kind or the server is not available on this machine.
+    /// </summary>
+    public class RealWorldTests : IClassFixture<SshServerFixture>
+    {
+        private readonly SshServerFixture _server;
+
+        public RealWorldTests(SshServerFixture server)
+        {
+            _server = server;
+        }
+
+        private string Login(params IPrivateKeySource[] keys)
+        {
+            using var client = new SshClient(new ConnectionInfo(_server.Host, _server.Port, _server.User,
+                new PrivateKeyAuthenticationMethod(_server.User, keys)));
+            client.Connect();
+            return client.RunCommand("echo ok").Result.Trim();
+        }
+
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void Ed25519KeyFromPuttygen_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind, TestKeys.Ed25519Puttygen);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Ed25519Puttygen)));
+        }
+
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void Ed25519KeyWithLeadingZeroPublicKey_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind, TestKeys.Ed25519ZeroLead);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Ed25519ZeroLead)));
+        }
+
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void RsaKey_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind, TestKeys.Rsa);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Rsa)));
+        }
+
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void EcdsaKey_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind, TestKeys.Ecdsa);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Ecdsa)));
+        }
+
+        /// <summary>
+        /// Regression test for GitHub issue #13: the authorized ed25519 key sits
+        /// behind two RSA keys the server does not accept. Every offered host key
+        /// algorithm costs one of the server's MaxAuthTries (default 6), and each
+        /// RSA key used to be offered with three algorithms (legacy ssh-rsa first,
+        /// which OpenSSH 8.8+ rejects outright), so the server disconnected with
+        /// "Too many authentication failures" before the ed25519 key was tried.
+        /// </summary>
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void Ed25519KeyBehindUnauthorizedRsaKeys_Authenticates(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind,
+                TestKeys.RsaUnauthorizedB, TestKeys.RsaUnauthorizedC, TestKeys.Ed25519Puttygen);
+
+            Assert.Equal("ok", Login(
+                agent.Identity(TestKeys.RsaUnauthorizedB),
+                agent.Identity(TestKeys.RsaUnauthorizedC),
+                agent.Identity(TestKeys.Ed25519Puttygen)));
+        }
+    }
+}
