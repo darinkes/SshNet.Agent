@@ -69,9 +69,10 @@ namespace SshNet.Agent
 
         public void RemoveIdentity(SshAgentPrivateKey sshAgentPrivateKey)
         {
-            if (((KeyHostAlgorithm)sshAgentPrivateKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
-                throw new ArgumentException("Just AgentKeys can be removed");
-            _ = Send(new RemoveIdentity(agentKey));
+            // HostAlgorithm.Data is the blob the agent listed the identity
+            // under - the key blob for plain keys, the certificate blob for
+            // certificates
+            _ = Send(new RemoveIdentity(sshAgentPrivateKey.HostKeyAlgorithms.First().Data));
         }
 
         public void AddIdentity(IPrivateKeySource keyFile)
