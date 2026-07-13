@@ -42,6 +42,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 
 - Auth
 - Adding Keys
+- Adding Keys with Constraints (lifetime, confirm)
 - Getting Keys
 - Removing Keys
 - Removing all Keys
@@ -77,6 +78,18 @@ var keys = agent.RequestIdentities();
 using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
+```
+
+### Key Constraints
+
+Keys can be added with the constraints known from `ssh-add -t` and `ssh-add -c`:
+
+```csharp
+var agent = new SshAgent();
+
+// the agent removes the key after 10 minutes and asks for
+// confirmation on every use
+agent.AddIdentity(new PrivateKeyFile("test.key"), TimeSpan.FromMinutes(10), confirm: true);
 ```
 
 ## Resharper Warning
