@@ -39,6 +39,21 @@ namespace SshNet.Agent
             return (SshAgentPrivateKey[])list;
         }
 
+        /// <summary>
+        /// Locks the agent with the passphrase. A locked agent hides its
+        /// identities and refuses signing until it is unlocked again.
+        /// </summary>
+        public void Lock(string passphrase)
+        {
+            _ = Send(new LockAgent(true, passphrase));
+        }
+
+        /// <summary>Unlocks an agent previously locked with <see cref="Lock"/>.</summary>
+        public void Unlock(string passphrase)
+        {
+            _ = Send(new LockAgent(false, passphrase));
+        }
+
         public void RemoveAllIdentities()
         {
             _ = Send(new RemoveIdentity());

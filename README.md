@@ -46,6 +46,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 - Getting Keys
 - Removing Keys
 - Removing all Keys
+- Locking and Unlocking the Agent
 
 ## Agent Protocol Documentation
 [draft-miller-ssh-agent-02](https://tools.ietf.org/html/draft-miller-ssh-agent-02)
@@ -90,6 +91,19 @@ var agent = new SshAgent();
 // the agent removes the key after 10 minutes and asks for
 // confirmation on every use
 agent.AddIdentity(new PrivateKeyFile("test.key"), TimeSpan.FromMinutes(10), confirm: true);
+```
+
+### Locking and Unlocking
+
+A locked agent hides its identities and refuses signing until it is unlocked
+again, like `ssh-add -x`/`ssh-add -X`:
+
+```csharp
+var agent = new SshAgent();
+
+agent.Lock("passphrase");
+// agent.RequestIdentities() is empty now
+agent.Unlock("passphrase");
 ```
 
 ## Resharper Warning
