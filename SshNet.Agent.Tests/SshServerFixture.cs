@@ -1,7 +1,9 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Builders;
+using DotNet.Testcontainers.Configurations;
 using DotNet.Testcontainers.Containers;
 using Xunit;
 
@@ -22,6 +24,13 @@ namespace SshNet.Agent.Tests
         public string User { get; private set; } = "";
         public string SkipReason { get; private set; } = "";
 
+        /// <summary>
+        /// Whether the server trusts certificates signed by the test CA. Only
+        /// the container is configured for it; an external server via
+        /// SSHNET_AGENT_SERVER is not.
+        /// </summary>
+        public bool TrustsTestCa { get; private set; }
+
         public async ValueTask InitializeAsync()
         {
             var external = Environment.GetEnvironmentVariable("SSHNET_AGENT_SERVER");
@@ -36,9 +45,14 @@ namespace SshNet.Agent.Tests
 
             try
             {
+                // the init script runs before sshd starts and makes it accept
+                // certificates signed by the test CA (principal "test")
+                var trustCa = "#!/bin/bash\necho \"TrustedUserCAKeys /ca/test_ca.pub\" >> /config/sshd/sshd_config\n";
                 var builder = new ContainerBuilder("lscr.io/linuxserver/openssh-server:latest")
                     .WithEnvironment("USER_NAME", "test")
                     .WithEnvironment("PUBLIC_KEY_DIR", "/authorized")
+                    .WithResourceMapping(new FileInfo(Path.Combine(TestKeys.Dir, "test_ca.pub")), "/ca/")
+                    .WithResourceMapping(Encoding.ASCII.GetBytes(trustCa), "/custom-cont-init.d/20-trust-test-ca", fileMode: Unix.FileMode755)
                     .WithPortBinding(2222, assignRandomHostPort: true)
                     .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(@"ls\.io-init\] done"));
                 foreach (var name in TestKeys.Authorized)
@@ -49,6 +63,7 @@ namespace SshNet.Agent.Tests
                 Host = "127.0.0.1";
                 Port = _container.GetMappedPublicPort(2222);
                 User = "test";
+                TrustsTestCa = true;
             }
             catch (Exception e)
             {
@@ -66,6 +81,12 @@ namespace SshNet.Agent.Tests
         {
             if (Host.Length == 0)
                 TestEnvironment.Unavailable("Server", SkipReason);
+        }
+
+        public void SkipUnlessTrustsTestCa()
+        {
+            if (!TrustsTestCa)
+                Assert.Skip("the server is not configured to trust the test CA");
         }
     }
 }
