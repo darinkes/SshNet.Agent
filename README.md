@@ -26,6 +26,18 @@ Note: Only with netstandard 2.1 it contains support for Unix Domain Sockets to u
 * ecdsa-sha2-nistp521
 * ssh-rsa with 2048, 3072, 4096 or 8192 KeyLength
 
+### RSA and legacy ssh-rsa
+
+RSA identities are offered as `rsa-sha2-512` and `rsa-sha2-256` (RFC 8332). The
+legacy SHA-1 `ssh-rsa` signature algorithm is only offered when explicitly
+enabled: it is needed solely for servers without RFC 8332 support (OpenSSH
+older than 7.2), OpenSSH 8.8+ rejects it, and every offered algorithm costs one
+of the server's `MaxAuthTries`.
+
+```csharp
+var agent = new SshAgent { IncludeLegacySshRsa = true };
+```
+
 ## Features
 
 - Auth
@@ -79,7 +91,7 @@ agent.AddIdentity(keyFile);
 
 var keys = agent.RequestIdentities();
 
-using var client = new SshClient("ssh.foo.com", "root", keys.ToArray<IPrivateKeyFile>());
+using var client = new SshClient("ssh.foo.com", "root", keys.ToArray<IPrivateKeySource>());
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
 ```
