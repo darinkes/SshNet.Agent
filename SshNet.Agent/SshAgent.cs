@@ -68,7 +68,7 @@ namespace SshNet.Agent
         {
             var signature = Send(new RequestSign(key, data, flags));
             if (signature is null)
-                return Array.Empty<byte>();
+                throw new SshAgentException("The agent did not return a signature");
             return (byte[])signature;
         }
 

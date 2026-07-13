@@ -87,11 +87,11 @@ namespace SshNet.Agent
         {
             var hWnd = PageantWindow();
             if (hWnd == IntPtr.Zero)
-                throw new Exception("Pageant Window not found");
+                throw new SshAgentException("Pageant window not found, is Pageant running?");
 
             var resultPtr = SendMessage(hWnd, WmCopydata, IntPtr.Zero, _copyDataPtr);
             if (resultPtr == IntPtr.Zero)
-                throw new Exception("Unable to send data to Pageant");
+                throw new SshAgentException("Pageant did not accept the request");
             Position = 0; // pageant overwrites, so reset the stream to zero
         }
 

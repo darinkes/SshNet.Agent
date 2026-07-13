@@ -36,7 +36,7 @@ namespace SshNet.Agent.AgentMessage
             _ = reader.ReadUInt32(); // msglen
             var answer = (AgentMessageType)reader.ReadByte();
             if (answer != AgentMessageType.SSH2_AGENT_SIGN_RESPONSE)
-                throw new Exception($"Wrong Answer {answer}");
+                throw new SshAgentFailureException($"The agent answered {answer} instead of SSH2_AGENT_SIGN_RESPONSE");
 
             var signatureData = reader.ReadStringAsBytes();
             using var signatureStream = new MemoryStream(signatureData);
