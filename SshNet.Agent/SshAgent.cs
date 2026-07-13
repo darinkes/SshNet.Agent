@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.AgentMessage;
@@ -107,6 +110,96 @@ namespace SshNet.Agent
 
             message.To(writer);
             return message.From(reader);
+        }
+
+        /// <summary>Async variant of <see cref="RequestIdentities"/>.</summary>
+        public async Task<SshAgentPrivateKey[]> RequestIdentitiesAsync(CancellationToken cancellationToken = default)
+        {
+            var list = await SendAsync(new RequestIdentities(this), cancellationToken).ConfigureAwait(false);
+            if (list is null)
+                return new SshAgentPrivateKey[] {};
+            return (SshAgentPrivateKey[])list;
+        }
+
+        /// <summary>Async variant of <see cref="AddIdentity"/>.</summary>
+        public async Task AddIdentityAsync(IPrivateKeySource keyFile, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new AddIdentity(keyFile), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="RemoveIdentity"/>.</summary>
+        public async Task RemoveIdentityAsync(SshAgentPrivateKey sshAgentPrivateKey, CancellationToken cancellationToken = default)
+        {
+            if (((KeyHostAlgorithm)sshAgentPrivateKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
+                throw new ArgumentException("Just AgentKeys can be removed");
+            _ = await SendAsync(new RemoveIdentity(agentKey), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="RemoveIdentities"/>.</summary>
+        public async Task RemoveIdentitiesAsync(IEnumerable<SshAgentPrivateKey> privateKeys, CancellationToken cancellationToken = default)
+        {
+            foreach (var privateKey in privateKeys)
+                await RemoveIdentityAsync(privateKey, cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="RemoveAllIdentities"/>.</summary>
+        public async Task RemoveAllIdentitiesAsync(CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new RemoveIdentity(), cancellationToken).ConfigureAwait(false);
+        }
+
+        internal virtual async Task<object?> SendAsync(IAgentMessage message, CancellationToken cancellationToken)
+        {
+            // messages serialize into memory, so only the transport needs to be
+            // asynchronous; the response is read completely before parsing
+            byte[] request;
+            using (var requestStream = new MemoryStream())
+            {
+                using (var writer = new AgentWriter(requestStream))
+                {
+                    message.To(writer);
+                }
+                request = requestStream.ToArray();
+            }
+
+            using var socketStream = await SshAgentSocketStream.ConnectAsync(_socketPath, _timeout, cancellationToken).ConfigureAwait(false);
+            await socketStream.WriteAsync(request, 0, request.Length, cancellationToken).ConfigureAwait(false);
+            var response = await ReadMessageAsync(socketStream, cancellationToken).ConfigureAwait(false);
+
+            using var responseStream = new MemoryStream(response);
+            using var reader = new AgentReader(responseStream);
+            return message.From(reader);
+        }
+
+        private const int MaxMessageLength = 256 * 1024; // OpenSSH AGENT_MAX_MSGLEN
+
+        /// <summary>
+        /// Reads one agent message (uint32 length + payload) and returns it
+        /// including the length prefix, which IAgentMessage.From expects to read.
+        /// </summary>
+        private static async Task<byte[]> ReadMessageAsync(Stream stream, CancellationToken cancellationToken)
+        {
+            var header = new byte[4];
+            await ReadExactlyAsync(stream, header, 0, cancellationToken).ConfigureAwait(false);
+            var length = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+            if (length < 1 || length > MaxMessageLength)
+                throw new InvalidDataException($"Invalid agent message length {length}");
+
+            var message = new byte[4 + length];
+            Buffer.BlockCopy(header, 0, message, 0, 4);
+            await ReadExactlyAsync(stream, message, 4, cancellationToken).ConfigureAwait(false);
+            return message;
+        }
+
+        private static async Task ReadExactlyAsync(Stream stream, byte[] buffer, int offset, CancellationToken cancellationToken)
+        {
+            while (offset < buffer.Length)
+            {
+                var read = await stream.ReadAsync(buffer, offset, buffer.Length - offset, cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                    throw new EndOfStreamException("The agent closed the connection mid-message");
+                offset += read;
+            }
         }
     }
 }
