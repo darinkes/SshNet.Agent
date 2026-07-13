@@ -64,6 +64,17 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile));
         }
 
+        /// <summary>
+        /// Adds the key with constraints, like ssh-add -t/-c: the agent deletes
+        /// the key again after <paramref name="lifetime"/>, and with
+        /// <paramref name="confirm"/> it asks the user for confirmation on every
+        /// use of the key.
+        /// </summary>
+        public void AddIdentity(IPrivateKeySource keyFile, TimeSpan? lifetime, bool confirm = false)
+        {
+            _ = Send(new AddIdentity(keyFile, lifetime, confirm));
+        }
+
         internal byte[] Sign(IAgentKey key, byte[] data, uint flags = 0)
         {
             var signature = Send(new RequestSign(key, data, flags));

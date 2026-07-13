@@ -9,11 +9,19 @@ namespace SshNet.Agent.AgentMessage
 {
     internal class AddIdentity : IAgentMessage
     {
-        private readonly IPrivateKeySource _keyFile;
+        // draft-miller-ssh-agent, "Key Constraints"
+        private const byte ConstrainLifetime = 1;
+        private const byte ConstrainConfirm = 2;
 
-        public AddIdentity(IPrivateKeySource keyFile)
+        private readonly IPrivateKeySource _keyFile;
+        private readonly TimeSpan? _lifetime;
+        private readonly bool _confirm;
+
+        public AddIdentity(IPrivateKeySource keyFile, TimeSpan? lifetime = null, bool confirm = false)
         {
             _keyFile = keyFile;
+            _lifetime = lifetime;
+            _confirm = confirm;
         }
 
         public void To(AgentWriter writer)
@@ -56,10 +64,23 @@ namespace SshNet.Agent.AgentMessage
             }
             // comment
             keyWriter.EncodeString(key.Comment ?? "");
+
+            var messageType = AgentMessageType.SSH2_AGENTC_ADD_IDENTITY;
+            if (_lifetime is not null || _confirm)
+            {
+                messageType = AgentMessageType.SSH2_AGENTC_ADD_ID_CONSTRAINED;
+                if (_lifetime is not null)
+                {
+                    keyWriter.Write(ConstrainLifetime);
+                    keyWriter.Write(Convert.ToUInt32(_lifetime.Value.TotalSeconds));
+                }
+                if (_confirm)
+                    keyWriter.Write(ConstrainConfirm);
+            }
             var keyData = keyStream.ToArray();
 
             writer.Write((uint)(1 + keyData.Length));
-            writer.Write((byte)AgentMessageType.SSH2_AGENTC_ADD_IDENTITY);
+            writer.Write((byte)messageType);
             writer.Write(keyData);
         }
 
