@@ -65,7 +65,8 @@ namespace SshNet.Agent.AgentMessage
 
         private static void WriteKey(AgentWriter keyWriter, Key key)
         {
-            keyWriter.EncodeString(key.ToString());
+            // ToString is the algorithm name for SSH.NET keys, never null
+            keyWriter.EncodeString(key.ToString()!);
             switch (key.ToString())
             {
                 case "ssh-ed25519":
@@ -89,7 +90,8 @@ namespace SshNet.Agent.AgentMessage
                     var publicKey = ecdsa.Public;
                     keyWriter.EncodeString(publicKey[0].ToByteArray().Reverse());
                     keyWriter.EncodeString(publicKey[1].ToByteArray().Reverse());
-                    keyWriter.EncodeBignum2(ecdsa.PrivateKey.ToBigInteger2().ToByteArray().Reverse());
+                    // a key loaded from a private key file always has the scalar
+                    keyWriter.EncodeBignum2(ecdsa.PrivateKey!.ToBigInteger2().ToByteArray().Reverse());
                     break;
                 default:
                     throw new NotSupportedException($"Adding keys of type {key} is not supported");
@@ -123,7 +125,8 @@ namespace SshNet.Agent.AgentMessage
                 // Fallthrough
                 case "ecdsa-sha2-nistp521":
                     var ecdsa = (EcdsaKey)key;
-                    keyWriter.EncodeBignum2(ecdsa.PrivateKey.ToBigInteger2().ToByteArray().Reverse());
+                    // a key loaded from a private key file always has the scalar
+                    keyWriter.EncodeBignum2(ecdsa.PrivateKey!.ToBigInteger2().ToByteArray().Reverse());
                     break;
                 default:
                     throw new NotSupportedException($"Adding certificates of type {key} is not supported");
