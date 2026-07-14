@@ -29,6 +29,10 @@ jobs:
       run: dotnet test --no-build --verbosity normal
       env:
         SSHNET_AGENT_TESTS_REQUIRED: OpenSsh,Pageant,Server
+    - name: Test against the lowest supported SSH.NET
+      run: dotnet test --verbosity normal -p:SshNetVersion=2024.2.0
+      env:
+        SSHNET_AGENT_TESTS_REQUIRED: OpenSsh,Pageant,Server
     - uses: actions/upload-artifact@v5
       with:
         name: Sample-ubuntu
