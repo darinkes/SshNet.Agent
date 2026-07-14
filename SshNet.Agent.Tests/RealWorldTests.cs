@@ -90,6 +90,44 @@ namespace SshNet.Agent.Tests
             Assert.Equal("ok", Login(agent.Identity(TestKeys.Rsa)));
         }
 
+        /// <summary>
+        /// A locked agent hides its identities until it is unlocked again
+        /// (ssh-add -x / -X). Needs no SSH server. Skips when the agent does not
+        /// support locking. The agent is always unlocked again, even on failure,
+        /// so a shared agent (e.g. the Windows service) is never left locked.
+        /// </summary>
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void LockedAgent_HidesIdentitiesUntilUnlocked(AgentKind kind)
+        {
+            using var testAgent = TestAgent.Start(kind, TestKeys.Ed25519Puttygen);
+            var agent = testAgent.Agent;
+            Assert.NotNull(TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen));
+
+            try
+            {
+                agent.Lock("correct horse battery staple");
+            }
+            catch (Exception e)
+            {
+                // Pageant answers SSH_AGENT_FAILURE, the Windows OpenSSH agent
+                // just closes the connection without answering
+                Assert.Skip($"the agent does not support locking ({e.Message})");
+            }
+
+            try
+            {
+                Assert.Null(TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen));
+            }
+            finally
+            {
+                agent.Unlock("correct horse battery staple");
+            }
+
+            Assert.NotNull(TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen));
+        }
+
         [Theory]
         [InlineData(AgentKind.OpenSsh)]
         [InlineData(AgentKind.Pageant)]
