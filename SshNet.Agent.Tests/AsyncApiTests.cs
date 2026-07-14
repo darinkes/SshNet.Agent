@@ -97,7 +97,7 @@ namespace SshNet.Agent.Tests
             // buffered, so the request can be written; the answer never comes
             using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
                 PipeTransmissionMode.Byte, PipeOptions.Asynchronous, inBufferSize: 4096, outBufferSize: 4096);
-            _ = server.WaitForConnectionAsync();
+            _ = server.WaitForConnectionAsync(TestContext.Current.CancellationToken);
             var agent = new SshAgent(pipeName, TimeSpan.FromMilliseconds(500));
 
             await Assert.ThrowsAsync<TimeoutException>(

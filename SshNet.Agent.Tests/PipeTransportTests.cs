@@ -45,7 +45,7 @@ namespace SshNet.Agent.Tests
             // buffered, so the request can be written; the answer never comes
             using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
                 PipeTransmissionMode.Byte, PipeOptions.Asynchronous, inBufferSize: 4096, outBufferSize: 4096);
-            _ = server.WaitForConnectionAsync();
+            _ = server.WaitForConnectionAsync(TestContext.Current.CancellationToken);
             var agent = new SshAgent(pipeName, TimeSpan.FromMilliseconds(500));
 
             Assert.Throws<TimeoutException>(() => agent.RequestIdentities());
@@ -63,7 +63,7 @@ namespace SshNet.Agent.Tests
             // unbuffered and never read from, so any write blocks
             using var server = new NamedPipeServerStream(pipeName, PipeDirection.InOut, 1,
                 PipeTransmissionMode.Byte, PipeOptions.Asynchronous);
-            _ = server.WaitForConnectionAsync();
+            _ = server.WaitForConnectionAsync(TestContext.Current.CancellationToken);
             var agent = new SshAgent(pipeName, TimeSpan.FromMilliseconds(500));
 
             Assert.Throws<TimeoutException>(() => agent.RequestIdentities());
