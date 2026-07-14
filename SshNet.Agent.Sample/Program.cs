@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.CommandLine;
+using Microsoft.Extensions.Logging;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,6 +40,10 @@ namespace SshNet.Agent.Sample
             {
                 Description = "Talk to PuTTY's Pageant instead of the OpenSSH agent"
             };
+            var verboseOption = new Option<bool>("--verbose", "-v")
+            {
+                Description = "Print the raw messages exchanged with the agent"
+            };
             var hostArgument = new Argument<string?>("host")
             {
                 Description = "SSH server to authenticate against with the agent identities",
@@ -53,6 +58,7 @@ namespace SshNet.Agent.Sample
             var command = new RootCommand("Demonstrates SshNet.Agent against a running key agent")
             {
                 pageantOption,
+                verboseOption,
                 hostArgument,
                 userArgument
             };
@@ -61,12 +67,46 @@ namespace SshNet.Agent.Sample
                 if (result.GetValue(hostArgument) is not null && result.GetValue(userArgument) is null)
                     result.AddError("A host also needs a user.");
             });
-            command.SetAction((result, _) => RunDemo(
-                result.GetValue(pageantOption) ? new Pageant() : new SshAgent(),
-                result.GetValue(hostArgument),
-                result.GetValue(userArgument)));
+            command.SetAction((result, _) =>
+            {
+                SshAgent agent = result.GetValue(pageantOption) ? new Pageant() : new SshAgent();
+                if (result.GetValue(verboseOption))
+                    agent.Logger = new HexDumpLogger();
+                return RunDemo(agent, result.GetValue(hostArgument), result.GetValue(userArgument));
+            });
 
             return command.Parse(args).InvokeAsync();
+        }
+
+        /// <summary>
+        /// The library logs each raw agent message as SshAgentTraceMessage
+        /// state and leaves the representation to the attached logger; this
+        /// one hex-dumps the traffic, like a tiny Wireshark.
+        /// </summary>
+        private sealed class HexDumpLogger : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+                Func<TState, Exception?, string> formatter)
+            {
+                if (state is not SshAgentTraceMessage message)
+                {
+                    Console.WriteLine(formatter(state, exception));
+                    return;
+                }
+
+                Console.WriteLine($"{(message.Direction == SshAgentTraceDirection.Request ? "->" : "<-")} {message.Data.Length} bytes");
+                for (var offset = 0; offset < message.Data.Length; offset += 16)
+                {
+                    var chunk = message.Data.Skip(offset).Take(16).ToArray();
+                    var hex = string.Join(" ", chunk.Select(value => value.ToString("x2"))).PadRight(47);
+                    var ascii = new string(chunk.Select(value => value is >= 0x20 and < 0x7f ? (char)value : '.').ToArray());
+                    Console.WriteLine($"   {offset:x4}  {hex}  {ascii}");
+                }
+            }
         }
 
         private static async Task<int> RunDemo(SshAgent agent, string? host, string? user)

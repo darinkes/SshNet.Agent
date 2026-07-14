@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Renci.SshNet;
 using Renci.SshNet.Security;
 using SshNet.Agent.AgentMessage;
@@ -27,6 +29,25 @@ namespace SshNet.Agent
         /// support (OpenSSH older than 7.2).
         /// </summary>
         public bool IncludeLegacySshRsa { get; set; }
+
+        /// <summary>
+        /// Logger for the agent conversation. At Trace level every raw
+        /// protocol message is logged as a <see cref="SshAgentTraceMessage"/>
+        /// with its direction and complete framed payload; the default text
+        /// rendering only summarizes it, the representation of the raw data is
+        /// up to the attached logger. Beware that requests contain private key
+        /// material when identities are added.
+        /// </summary>
+        public ILogger Logger { get; set; } = NullLogger.Instance;
+
+        private static readonly EventId AgentMessageEvent = new EventId(1, "AgentMessage");
+
+        internal void LogMessage(SshAgentTraceDirection direction, byte[] data)
+        {
+            if (Logger.IsEnabled(LogLevel.Trace))
+                Logger.Log(LogLevel.Trace, AgentMessageEvent, new SshAgentTraceMessage(direction, data), null,
+                    (state, _) => $"{state.Direction} agent message, {state.Data.Length} bytes");
+        }
 
         /// <summary>
         /// Uses the agent from the SSH_AUTH_SOCK environment variable, or the
@@ -129,12 +150,15 @@ namespace SshNet.Agent
 
         internal virtual object? Send(IAgentMessage message)
         {
-            using var socketStream = new SshAgentSocketStream(_socketPath, _timeout);
-            using var writer = new AgentWriter(socketStream);
-            using var reader = new AgentReader(socketStream);
+            var request = Serialize(message);
+            LogMessage(SshAgentTraceDirection.Request, request);
 
-            message.To(writer);
-            return message.From(reader);
+            using var socketStream = new SshAgentSocketStream(_socketPath, _timeout);
+            socketStream.Write(request, 0, request.Length);
+            var response = ReadMessage(socketStream);
+            LogMessage(SshAgentTraceDirection.Response, response);
+
+            return Parse(message, response);
         }
 
         /// <summary>Async variant of <see cref="RequestIdentities"/>.</summary>
@@ -176,28 +200,66 @@ namespace SshNet.Agent
 
         internal virtual async Task<object?> SendAsync(IAgentMessage message, CancellationToken cancellationToken)
         {
-            // messages serialize into memory, so only the transport needs to be
-            // asynchronous; the response is read completely before parsing
-            byte[] request;
-            using (var requestStream = new MemoryStream())
-            {
-                using (var writer = new AgentWriter(requestStream))
-                {
-                    message.To(writer);
-                }
-                request = requestStream.ToArray();
-            }
+            var request = Serialize(message);
+            LogMessage(SshAgentTraceDirection.Request, request);
 
             using var socketStream = await SshAgentSocketStream.ConnectAsync(_socketPath, _timeout, cancellationToken).ConfigureAwait(false);
             await socketStream.WriteAsync(request, 0, request.Length, cancellationToken).ConfigureAwait(false);
             var response = await ReadMessageAsync(socketStream, cancellationToken).ConfigureAwait(false);
+            LogMessage(SshAgentTraceDirection.Response, response);
 
+            return Parse(message, response);
+        }
+
+        /// <summary>
+        /// Messages serialize into memory, so only the transport needs to
+        /// care about timeouts and the response is read completely before
+        /// parsing; the returned buffer is the complete framed message.
+        /// </summary>
+        internal static byte[] Serialize(IAgentMessage message)
+        {
+            using var requestStream = new MemoryStream();
+            using (var writer = new AgentWriter(requestStream))
+            {
+                message.To(writer);
+            }
+            return requestStream.ToArray();
+        }
+
+        internal static object? Parse(IAgentMessage message, byte[] response)
+        {
             using var responseStream = new MemoryStream(response);
             using var reader = new AgentReader(responseStream);
             return message.From(reader);
         }
 
         private const int MaxMessageLength = 256 * 1024; // OpenSSH AGENT_MAX_MSGLEN
+
+        /// <summary>Sync twin of <see cref="ReadMessageAsync"/>.</summary>
+        internal static byte[] ReadMessage(Stream stream)
+        {
+            var header = new byte[4];
+            ReadExactly(stream, header, 0);
+            var length = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+            if (length < 1 || length > MaxMessageLength)
+                throw new InvalidDataException($"Invalid agent message length {length}");
+
+            var message = new byte[4 + length];
+            Buffer.BlockCopy(header, 0, message, 0, 4);
+            ReadExactly(stream, message, 4);
+            return message;
+        }
+
+        private static void ReadExactly(Stream stream, byte[] buffer, int offset)
+        {
+            while (offset < buffer.Length)
+            {
+                var read = stream.Read(buffer, offset, buffer.Length - offset);
+                if (read == 0)
+                    throw new EndOfStreamException("The agent closed the connection mid-message");
+                offset += read;
+            }
+        }
 
         /// <summary>
         /// Reads one agent message (uint32 length + payload) and returns it
