@@ -42,7 +42,7 @@ namespace SshNet.Agent.Tests
             var algorithm = Assert.IsType<CertificateHostAlgorithm>(identity.HostKeyAlgorithms.First());
             Assert.Equal("ssh-ed25519-cert-v01@openssh.com", algorithm.Name);
             Assert.Equal(blob, algorithm.Data);
-            Assert.Equal("cert identity", identity.Key.Comment);
+            Assert.Equal("cert identity", identity.Key!.Comment);
         }
 
         [Fact]

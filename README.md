@@ -26,6 +26,16 @@ Note: Only the netstandard 2.1 and .NET 8.0 builds contain support for Unix Doma
 * ecdsa-sha2-nistp384
 * ecdsa-sha2-nistp521
 * ssh-rsa with 2048, 3072, 4096 or 8192 KeyLength
+* sk-ssh-ed25519@openssh.com (FIDO/security key)
+* sk-ecdsa-sha2-nistp256@openssh.com (FIDO/security key)
+
+### FIDO / security keys
+
+FIDO identities (`ssh-keygen -t ed25519-sk` / `-t ecdsa-sk`) held by the agent
+are offered to the server automatically. The agent drives the authenticator, so
+touch (and, for verify-required keys, the PIN) is prompted at sign time; the
+private key never leaves the hardware. These identities have no SSH.NET `Key`,
+so `SshAgentPrivateKey.Key` is `null` for them.
 
 ### RSA and legacy ssh-rsa
 

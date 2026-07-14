@@ -9,12 +9,14 @@ namespace SshNet.Agent.AgentMessage
         private readonly IAgentKey _key;
         private readonly byte[] _data;
         private readonly uint _flags;
+        private readonly bool _rawSignature;
 
-        public RequestSign(IAgentKey key, byte[] data, uint flags = 0)
+        public RequestSign(IAgentKey key, byte[] data, uint flags = 0, bool rawSignature = false)
         {
             _key = key;
             _data = data;
             _flags = flags;
+            _rawSignature = rawSignature;
         }
 
         public void To(AgentWriter writer)
@@ -39,6 +41,12 @@ namespace SshNet.Agent.AgentMessage
                 throw new SshAgentFailureException($"The agent answered {answer} instead of SSH2_AGENT_SIGN_RESPONSE");
 
             var signatureData = reader.ReadStringAsBytes();
+
+            // sk (FIDO) signatures carry extra flags and a counter; the whole blob
+            // is already the wire format, so return it instead of unwrapping it
+            if (_rawSignature)
+                return signatureData;
+
             using var signatureStream = new MemoryStream(signatureData);
             using var signatureReader = new AgentReader(signatureStream);
 
