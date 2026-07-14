@@ -27,13 +27,16 @@ namespace SshNet.Agent
 
         internal override object? Send(IAgentMessage message)
         {
-            using var socketStream = new PageantSocketStream();
-            using var writer = new AgentWriter(socketStream);
-            using var reader = new AgentReader(socketStream);
+            var request = Serialize(message);
+            LogMessage(SshAgentTraceDirection.Request, request);
 
-            message.To(writer);
+            using var socketStream = new PageantSocketStream();
+            socketStream.Write(request, 0, request.Length);
             socketStream.Send();
-            return message.From(reader);
+            var response = ReadMessage(socketStream);
+            LogMessage(SshAgentTraceDirection.Response, response);
+
+            return Parse(message, response);
         }
 
         internal override Task<object?> SendAsync(IAgentMessage message, CancellationToken cancellationToken)
