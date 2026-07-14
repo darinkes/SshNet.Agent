@@ -5,6 +5,7 @@
         <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net48;net8.0</TargetFrameworks>
         <TargetFramework Condition="'$(OS)' != 'Windows_NT'">net8.0</TargetFramework>
         <RollForward>LatestMajor</RollForward>
+        <Nullable>enable</Nullable>
         <LangVersion>9</LangVersion>
     </PropertyGroup>
 
@@ -14,6 +15,10 @@
 
     <ItemGroup>
         <EmbeddedResource Include="TestKeys\*" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="System.CommandLine" Version="2.0.9" />
     </ItemGroup>
 
 </Project>
