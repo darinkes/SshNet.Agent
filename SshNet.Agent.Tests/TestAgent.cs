@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -23,6 +24,7 @@ namespace SshNet.Agent.Tests
         /// Server). CI sets that variable so missing components cannot turn the
         /// pipeline silently green by skipping.
         /// </summary>
+        [DoesNotReturn]
         public static void Unavailable(string component, string reason)
         {
             var required = Environment.GetEnvironmentVariable("SSHNET_AGENT_TESTS_REQUIRED") ?? "";
