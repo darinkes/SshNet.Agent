@@ -49,6 +49,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 - Removing Keys
 - Removing all Keys
 - Locking and Unlocking the Agent
+- Async API
 
 ## Agent Protocol Documentation
 [draft-miller-ssh-agent-02](https://tools.ietf.org/html/draft-miller-ssh-agent-02)
@@ -82,6 +83,42 @@ using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
 ```
+
+### OpenSSH Certificates
+
+Certificate identities held by the agent (`*-cert-v01@openssh.com`) are offered
+to the server automatically; the agent signs with the matching private key. To
+add a key together with its certificate, load the certificate alongside the
+private key:
+
+```csharp
+var agent = new SshAgent();
+
+// test.key + the certificate signed by your CA (test-cert.pub)
+agent.AddIdentity(new PrivateKeyFile("test.key", null, "test-cert.pub"));
+
+var keys = agent.RequestIdentities();
+
+// works against servers that trust the CA (TrustedUserCAKeys)
+using var client = new SshClient("ssh.foo.com", "root", keys);
+client.Connect();
+```
+
+### Async
+
+All agent operations are also available asynchronously and take an optional
+`CancellationToken`:
+
+```csharp
+var agent = new SshAgent();
+
+await agent.AddIdentityAsync(new PrivateKeyFile("test.key"), cancellationToken);
+var keys = await agent.RequestIdentitiesAsync(cancellationToken);
+await agent.RemoveAllIdentitiesAsync(cancellationToken);
+```
+
+Note: Signing during authentication stays synchronous, since SSH.NET calls it
+through its synchronous `DigitalSignature` contract.
 
 ### Key Constraints
 

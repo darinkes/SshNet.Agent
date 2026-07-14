@@ -146,7 +146,7 @@ namespace SshNet.Agent
             return (SshAgentPrivateKey[])list;
         }
 
-        /// <summary>Async variant of <see cref="AddIdentity"/>.</summary>
+        /// <summary>Async variant of <see cref="AddIdentity(IPrivateKeySource)"/>.</summary>
         public async Task AddIdentityAsync(IPrivateKeySource keyFile, CancellationToken cancellationToken = default)
         {
             _ = await SendAsync(new AddIdentity(keyFile), cancellationToken).ConfigureAwait(false);
