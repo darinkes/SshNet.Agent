@@ -45,7 +45,7 @@ namespace SshNet.Agent.Tests
             // real agent does on a wrong passphrase
             using var fake = new FakeAgent();
 
-            Assert.ThrowsAny<Exception>(() => fake.CreateClient().Unlock("wrong"));
+            Assert.Throws<SshAgentFailureException>(() => fake.CreateClient().Unlock("wrong"));
         }
     }
 }

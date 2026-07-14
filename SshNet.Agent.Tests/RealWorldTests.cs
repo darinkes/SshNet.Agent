@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Threading;
 using Renci.SshNet;
 using Xunit;
@@ -66,7 +67,7 @@ namespace SshNet.Agent.Tests
             {
                 agent.AddIdentity(TestKeys.PrivateKey(TestKeys.Ed25519Puttygen), TimeSpan.FromSeconds(2));
             }
-            catch (Exception e) when (e.Message.Contains("SSH_AGENT_FAILURE"))
+            catch (SshAgentFailureException)
             {
                 Assert.Skip("the agent does not support key constraints");
             }
@@ -109,7 +110,7 @@ namespace SshNet.Agent.Tests
             {
                 agent.Lock("correct horse battery staple");
             }
-            catch (Exception e)
+            catch (Exception e) when (e is SshAgentFailureException or EndOfStreamException)
             {
                 // Pageant answers SSH_AGENT_FAILURE, the Windows OpenSSH agent
                 // just closes the connection without answering

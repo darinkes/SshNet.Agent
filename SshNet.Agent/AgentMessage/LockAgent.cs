@@ -31,7 +31,7 @@ namespace SshNet.Agent.AgentMessage
             _ = reader.ReadUInt32(); // msglen
             var answer = (AgentMessageType)reader.ReadByte();
             if (answer != AgentMessageType.SSH_AGENT_SUCCESS)
-                throw new Exception($"Wrong Answer {answer}");
+                throw new SshAgentFailureException($"The agent answered {answer} instead of SSH_AGENT_SUCCESS");
             return null;
         }
     }
