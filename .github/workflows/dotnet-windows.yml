@@ -34,7 +34,18 @@ jobs:
         Get-Content SshNet.Agent.Tests\TestKeys\ed25519_puttygen.pub, SshNet.Agent.Tests\TestKeys\ed25519_zerolead.pub, SshNet.Agent.Tests\TestKeys\rsa_a.pub, SshNet.Agent.Tests\TestKeys\ecdsa_256.pub | Set-Content $authorizedKeys
         icacls $authorizedKeys /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F'
         Start-Service sshd
+        # trust the test CA for certificate authentication; the certificates
+        # carry the principal "test", which the static principals file maps to
+        # every user (the runner user is not "test")
+        Copy-Item SshNet.Agent.Tests\TestKeys\test_ca.pub C:\ProgramData\ssh\test_ca.pub
+        Set-Content C:\ProgramData\ssh\principals 'test'
+        icacls C:\ProgramData\ssh\test_ca.pub /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F'
+        icacls C:\ProgramData\ssh\principals /inheritance:r /grant 'Administrators:F' /grant 'SYSTEM:F'
+        Add-Content C:\ProgramData\ssh\sshd_config 'TrustedUserCAKeys __PROGRAMDATA__/ssh/test_ca.pub'
+        Add-Content C:\ProgramData\ssh\sshd_config 'AuthorizedPrincipalsFile __PROGRAMDATA__/ssh/principals'
+        Restart-Service sshd
         "SSHNET_AGENT_SERVER=127.0.0.1:22:$env:UserName" | Out-File -FilePath $env:GITHUB_ENV -Append
+        "SSHNET_AGENT_SERVER_TRUSTS_CA=1" | Out-File -FilePath $env:GITHUB_ENV -Append
     - name: Test
       run: dotnet test --no-build --verbosity normal
       env:

@@ -40,6 +40,7 @@ namespace SshNet.Agent.Tests
                 Host = parts[0];
                 Port = int.Parse(parts[1]);
                 User = parts[2];
+                TrustsTestCa = Environment.GetEnvironmentVariable("SSHNET_AGENT_SERVER_TRUSTS_CA") == "1";
                 return;
             }
 
