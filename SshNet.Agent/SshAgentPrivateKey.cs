@@ -7,14 +7,21 @@ using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
+    /// <summary>
+    /// An identity held by the agent, usable as an SSH.NET private key source:
+    /// signing is delegated to the agent, the private key never leaves it.
+    /// </summary>
     public class SshAgentPrivateKey : IPrivateKeySource
     {
         private readonly List<HostAlgorithm> _hostAlgorithms = new();
 
+        /// <summary>The host key algorithms this identity is offered with.</summary>
         public IReadOnlyCollection<HostAlgorithm> HostKeyAlgorithms => _hostAlgorithms;
 
+        /// <summary>The public key; for certificates the key embedded in the certificate.</summary>
         public Key Key { get; }
 
+        /// <summary>The identity of a plain key held by the agent.</summary>
         public SshAgentPrivateKey(SshAgent agent, Key key)
         {
             Key = key;
@@ -34,6 +41,10 @@ namespace SshNet.Agent
             _hostAlgorithms.Add(new KeyHostAlgorithm(key.ToString(), key));
         }
 
+        /// <summary>
+        /// The identity of an OpenSSH certificate held by the agent; the agent
+        /// signs with the private key matching <paramref name="certificateData"/>.
+        /// </summary>
         public SshAgentPrivateKey(SshAgent agent, Certificate certificate, byte[] certificateData)
         {
             Key = certificate.Key;

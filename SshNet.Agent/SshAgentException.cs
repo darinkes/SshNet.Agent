@@ -5,10 +5,12 @@ namespace SshNet.Agent
     /// <summary>Thrown when communication with the key agent fails.</summary>
     public class SshAgentException : Exception
     {
+        /// <summary>Creates the exception with a message describing the failure.</summary>
         public SshAgentException(string message) : base(message)
         {
         }
 
+        /// <summary>Creates the exception with a message and the causing exception.</summary>
         public SshAgentException(string message, Exception innerException) : base(message, innerException)
         {
         }
@@ -21,6 +23,7 @@ namespace SshNet.Agent
     /// </summary>
     public class SshAgentFailureException : SshAgentException
     {
+        /// <summary>Creates the exception with a message naming the unexpected answer.</summary>
         public SshAgentFailureException(string message) : base(message)
         {
         }
