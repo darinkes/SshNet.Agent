@@ -174,6 +174,24 @@ namespace SshNet.Agent
             _ = await SendAsync(new RemoveIdentity(), cancellationToken).ConfigureAwait(false);
         }
 
+        /// <summary>Async variant of <see cref="AddIdentity(IPrivateKeySource, TimeSpan?, bool)"/>.</summary>
+        public async Task AddIdentityAsync(IPrivateKeySource keyFile, TimeSpan? lifetime, bool confirm = false, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new AddIdentity(keyFile, lifetime, confirm), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="Lock"/>.</summary>
+        public async Task LockAsync(string passphrase, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new LockAgent(true, passphrase), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="Unlock"/>.</summary>
+        public async Task UnlockAsync(string passphrase, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new LockAgent(false, passphrase), cancellationToken).ConfigureAwait(false);
+        }
+
         internal virtual async Task<object?> SendAsync(IAgentMessage message, CancellationToken cancellationToken)
         {
             // messages serialize into memory, so only the transport needs to be

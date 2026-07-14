@@ -105,6 +105,50 @@ namespace SshNet.Agent.Tests
         }
 
         [Fact]
+        public async Task AddIdentityAsync_WithConstraints_SendsTheConstrainedMessage()
+        {
+            using var fake = new FakeAgent();
+            fake.EnqueueResponse(new[] { SshAgentSuccess });
+            var keyFile = new PrivateKeyFile(TestKeys.PrivateKeyPath(TestKeys.Ed25519Puttygen));
+
+            await fake.CreateClient().AddIdentityAsync(keyFile, TimeSpan.FromMinutes(10), confirm: true,
+                cancellationToken: TestContext.Current.CancellationToken);
+
+            var request = new WireReader(fake.SingleRequest());
+            Assert.Equal(25, request.Byte()); // SSH2_AGENTC_ADD_ID_CONSTRAINED
+            request.Text(); // key type
+            request.Str(); // public key
+            request.Str(); // private key
+            request.Str(); // comment
+            Assert.Equal(1, request.Byte()); // SSH_AGENT_CONSTRAIN_LIFETIME
+            Assert.Equal(600u, request.U32());
+            Assert.Equal(2, request.Byte()); // SSH_AGENT_CONSTRAIN_CONFIRM
+            Assert.True(request.AtEnd);
+        }
+
+        [Fact]
+        public async Task LockAsyncAndUnlockAsync_SendThePassphrase()
+        {
+            using var fake = new FakeAgent();
+            fake.EnqueueResponse(new[] { SshAgentSuccess });
+            fake.EnqueueResponse(new[] { SshAgentSuccess });
+            var agent = fake.CreateClient();
+
+            await agent.LockAsync("correct horse battery staple", TestContext.Current.CancellationToken);
+            await agent.UnlockAsync("correct horse battery staple", TestContext.Current.CancellationToken);
+
+            Assert.True(fake.Requests.TryDequeue(out var rawLock));
+            var lockRequest = new WireReader(rawLock!);
+            Assert.Equal(22, lockRequest.Byte()); // SSH_AGENTC_LOCK
+            Assert.Equal("correct horse battery staple", lockRequest.Text());
+
+            Assert.True(fake.Requests.TryDequeue(out var rawUnlock));
+            var unlockRequest = new WireReader(rawUnlock!);
+            Assert.Equal(23, unlockRequest.Byte()); // SSH_AGENTC_UNLOCK
+            Assert.Equal("correct horse battery staple", unlockRequest.Text());
+        }
+
+        [Fact]
         public async Task CanceledToken_CancelsTheRequest()
         {
             using var fake = new FakeAgent();
