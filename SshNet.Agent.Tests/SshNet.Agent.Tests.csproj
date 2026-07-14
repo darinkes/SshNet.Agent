@@ -18,6 +18,19 @@
         <ProjectReference Include="..\SshNet.Agent\SshNet.Agent.csproj" />
     </ItemGroup>
 
+    <!-- CI runs a second test leg with -p:SshNetVersion=2024.2.0 so the lowest
+         SSH.NET the library claims to support stays tested; without the pin,
+         Testcontainers pulls the newest SSH.NET into the test graph. Its own
+         SSH.NET-based features (SSH port forwarding) are not used by these
+         tests, hence the NU1608 suppression for the pinned leg. -->
+    <ItemGroup Condition="'$(SshNetVersion)' != ''">
+        <PackageReference Include="SSH.NET" Version="[$(SshNetVersion)]" />
+    </ItemGroup>
+    <PropertyGroup Condition="'$(SshNetVersion)' != ''">
+        <!-- NU1605: the pin is a deliberate downgrade below Testcontainers' minimum -->
+        <NoWarn>$(NoWarn);NU1608;NU1605</NoWarn>
+    </PropertyGroup>
+
     <ItemGroup>
         <None Include="TestKeys\**" CopyToOutputDirectory="PreserveNewest" />
     </ItemGroup>
