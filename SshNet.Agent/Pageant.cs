@@ -8,8 +8,13 @@ using SshNet.Agent.AgentMessage;
 
 namespace SshNet.Agent
 {
+    /// <summary>
+    /// Talks to PuTTY's Pageant over its WM_COPYDATA window message interface
+    /// instead of a socket. Windows only.
+    /// </summary>
     public class Pageant : SshAgent
     {
+        /// <summary>Creates the client; Pageant itself must already be running.</summary>
         public Pageant()
         {
 #if NETSTANDARD

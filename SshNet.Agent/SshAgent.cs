@@ -11,6 +11,11 @@ using SshNet.Agent.Keys;
 
 namespace SshNet.Agent
 {
+    /// <summary>
+    /// Talks to an ssh-agent (OpenSSH or compatible) over a unix domain socket
+    /// or a Windows named pipe, so the identities it holds can be used with
+    /// SSH.NET. Signing happens inside the agent; private keys never leave it.
+    /// </summary>
     public class SshAgent
     {
         private readonly string _socketPath;
@@ -23,17 +28,30 @@ namespace SshNet.Agent
         /// </summary>
         public bool IncludeLegacySshRsa { get; set; }
 
+        /// <summary>
+        /// Uses the agent from the SSH_AUTH_SOCK environment variable, or the
+        /// default OpenSSH agent pipe on Windows when the variable is not set.
+        /// </summary>
         public SshAgent(TimeSpan? timeout = null)
             : this(Environment.GetEnvironmentVariable("SSH_AUTH_SOCK") ?? "openssh-ssh-agent", timeout)
         {
         }
 
+        /// <summary>
+        /// Uses the agent at the given unix domain socket path or Windows pipe
+        /// name (a full \\.\pipe\ path works as well). The timeout applies to
+        /// connecting and to each read and write; it defaults to 10 seconds.
+        /// </summary>
         public SshAgent(string socketPath, TimeSpan? timeout)
         {
             _socketPath = socketPath;
             _timeout = timeout ?? TimeSpan.FromSeconds(10);
         }
 
+        /// <summary>
+        /// Lists the identities the agent holds, usable as SSH.NET private key
+        /// sources. Key types this library cannot use (e.g. sk-*) are skipped.
+        /// </summary>
         public SshAgentPrivateKey[] RequestIdentities()
         {
             var list = Send(new RequestIdentities(this));
@@ -57,11 +75,13 @@ namespace SshNet.Agent
             _ = Send(new LockAgent(false, passphrase));
         }
 
+        /// <summary>Removes all identities from the agent.</summary>
         public void RemoveAllIdentities()
         {
             _ = Send(new RemoveIdentity());
         }
 
+        /// <summary>Removes the identities from the agent.</summary>
         public void RemoveIdentities(IEnumerable<SshAgentPrivateKey> privateKeys)
         {
             foreach (var privateKey in privateKeys)
@@ -70,6 +90,7 @@ namespace SshNet.Agent
             }
         }
 
+        /// <summary>Removes the identity from the agent.</summary>
         public void RemoveIdentity(SshAgentPrivateKey sshAgentPrivateKey)
         {
             // HostAlgorithm.Data is the blob the agent listed the identity
@@ -78,6 +99,10 @@ namespace SshNet.Agent
             _ = Send(new RemoveIdentity(sshAgentPrivateKey.HostKeyAlgorithms.First().Data));
         }
 
+        /// <summary>
+        /// Adds the key to the agent, together with its certificate when the
+        /// key file carries one.
+        /// </summary>
         public void AddIdentity(IPrivateKeySource keyFile)
         {
             _ = Send(new AddIdentity(keyFile));

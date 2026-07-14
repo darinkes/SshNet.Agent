@@ -18,7 +18,8 @@
         <Authors>darinkes</Authors>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <NoWarn>$(NoWarn);CS1591</NoWarn>
+        <!-- an undocumented public member is an error, so the API stays documented -->
+        <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
     </PropertyGroup>
 
     <!-- The sources gate the unix socket support and platform guards on the
