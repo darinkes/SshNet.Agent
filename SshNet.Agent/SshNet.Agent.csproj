@@ -22,13 +22,6 @@
         <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
     </PropertyGroup>
 
-    <!-- The sources gate the unix socket support and platform guards on the
-         NETSTANDARD(2_1) symbols; net8.0 has all of those APIs, so define them
-         there instead of widening every #if. -->
-    <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0'">
-        <DefineConstants>$(DefineConstants);NETSTANDARD;NETSTANDARD2_1</DefineConstants>
-    </PropertyGroup>
-
     <PropertyGroup Label="SourceLink and symbols">
         <RepositoryUrl>https://github.com/darinkes/SshNet.Agent</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
