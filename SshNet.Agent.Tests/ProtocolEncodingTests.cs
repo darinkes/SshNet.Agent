@@ -185,6 +185,45 @@ namespace SshNet.Agent.Tests
         }
 
         [Fact]
+        public void Sign_FidoKey_ReturnsTheAgentBlobVerbatim()
+        {
+            using var fake = new FakeAgent();
+            var blob = Wire.Cat(
+                Wire.Str("sk-ssh-ed25519@openssh.com"),
+                Wire.Str(new byte[32]),
+                Wire.Str("ssh:"));
+            fake.EnqueueResponse(Wire.Cat(
+                new[] { Ssh2AgentIdentitiesAnswer },
+                Wire.U32(1),
+                Wire.Str(blob), Wire.Str("fido key")));
+            var identity = Assert.Single(fake.CreateClient().RequestIdentities());
+            var algorithm = identity.HostKeyAlgorithms.First();
+            Assert.Equal("sk-ssh-ed25519@openssh.com", algorithm.Name);
+
+            // string algorithm, string signature, byte flags, uint32 counter
+            var skSignature = Wire.Cat(
+                Wire.Str("sk-ssh-ed25519@openssh.com"),
+                Wire.Str(new byte[] { 0xca, 0xfe, 0xba, 0xbe }),
+                new byte[] { 0x01 },        // SSH_SK_USER_PRESENCE_REQD
+                Wire.U32(42));              // signature counter
+            fake.EnqueueResponse(Wire.Cat(
+                new[] { Ssh2AgentSignResponse },
+                Wire.Str(skSignature)));
+
+            var signature = algorithm.Sign(new byte[] { 1, 2, 3, 4 });
+
+            // the whole sk blob, flags and counter included, goes on the wire as-is
+            Assert.Equal(skSignature, signature);
+            fake.Requests.TryDequeue(out _); // request-identities
+            Assert.True(fake.Requests.TryDequeue(out var raw));
+            var request = new WireReader(raw!);
+            Assert.Equal(Ssh2AgentcSignRequest, request.Byte());
+            Assert.Equal(blob, request.Str());
+            request.Str(); // data
+            Assert.Equal(0u, request.U32()); // no sign flags for sk keys
+        }
+
+        [Fact]
         public void RemoveAllIdentities_SendsTheBareMessage()
         {
             using var fake = new FakeAgent();

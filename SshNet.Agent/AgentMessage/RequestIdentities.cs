@@ -54,6 +54,10 @@ namespace SshNet.Agent.AgentMessage
                     case "ssh-ed25519":
                         key = new ED25519AgentKey(_agent, keyData);
                         break;
+                    case "sk-ecdsa-sha2-nistp256@openssh.com":
+                    case "sk-ssh-ed25519@openssh.com":
+                        keys.Add(new SshAgentPrivateKey(_agent, keyData, keyType));
+                        continue;
                     case "ssh-rsa-cert-v01@openssh.com":
                     case "ecdsa-sha2-nistp256-cert-v01@openssh.com":
                     case "ecdsa-sha2-nistp384-cert-v01@openssh.com":
@@ -64,9 +68,9 @@ namespace SshNet.Agent.AgentMessage
                         keys.Add(new SshAgentPrivateKey(_agent, certificate, keyData));
                         continue;
                     default:
-                        // an agent may also hold key types this library cannot use,
-                        // e.g. FIDO keys (sk-*); leave those to other clients
-                        // instead of failing the whole list
+                        // an agent may hold key types this library cannot use;
+                        // leave those to other clients instead of failing the
+                        // whole list
                         continue;
                 }
                 key.Comment = comment;

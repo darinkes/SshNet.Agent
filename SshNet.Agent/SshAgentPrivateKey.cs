@@ -18,8 +18,12 @@ namespace SshNet.Agent
         /// <summary>The host key algorithms this identity is offered with.</summary>
         public IReadOnlyCollection<HostAlgorithm> HostKeyAlgorithms => _hostAlgorithms;
 
-        /// <summary>The public key; for certificates the key embedded in the certificate.</summary>
-        public Key Key { get; }
+        /// <summary>
+        /// The public key; for certificates the key embedded in the certificate.
+        /// <see langword="null"/> for FIDO/security keys (sk-*), which have no
+        /// SSH.NET <see cref="Key"/> type.
+        /// </summary>
+        public Key? Key { get; }
 
         /// <summary>The identity of a plain key held by the agent.</summary>
         public SshAgentPrivateKey(SshAgent agent, Key key)
@@ -39,6 +43,16 @@ namespace SshNet.Agent
             }
 
             _hostAlgorithms.Add(new KeyHostAlgorithm(key.ToString(), key));
+        }
+
+        /// <summary>
+        /// The identity of a FIDO/security key held by the agent
+        /// (sk-ecdsa-sha2-nistp256@openssh.com or sk-ssh-ed25519@openssh.com).
+        /// </summary>
+        public SshAgentPrivateKey(SshAgent agent, byte[] keyData, string keyType)
+        {
+            Key = null; // no SSH.NET Key type for sk-* keys
+            _hostAlgorithms.Add(new SkAgentHostAlgorithm(agent, keyType, keyData));
         }
 
         /// <summary>

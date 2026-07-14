@@ -50,7 +50,7 @@ namespace SshNet.Agent
 
         /// <summary>
         /// Lists the identities the agent holds, usable as SSH.NET private key
-        /// sources. Key types this library cannot use (e.g. sk-*) are skipped.
+        /// sources. Key types this library cannot use are skipped.
         /// </summary>
         public SshAgentPrivateKey[] RequestIdentities()
         {
@@ -119,9 +119,9 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile, lifetime, confirm));
         }
 
-        internal byte[] Sign(IAgentKey key, byte[] data, uint flags = 0)
+        internal byte[] Sign(IAgentKey key, byte[] data, uint flags = 0, bool rawSignature = false)
         {
-            var signature = Send(new RequestSign(key, data, flags));
+            var signature = Send(new RequestSign(key, data, flags, rawSignature));
             if (signature is null)
                 throw new SshAgentException("The agent did not return a signature");
             return (byte[])signature;
