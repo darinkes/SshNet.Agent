@@ -1,4 +1,4 @@
-﻿#if NETSTANDARD
+﻿#if !NETFRAMEWORK
 using System;
 using System.Runtime.InteropServices;
 #endif
@@ -17,7 +17,7 @@ namespace SshNet.Agent
         /// <summary>Creates the client; Pageant itself must already be running.</summary>
         public Pageant()
         {
-#if NETSTANDARD
+#if !NETFRAMEWORK
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 throw new NotSupportedException("Pageant is Windows only");

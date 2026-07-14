@@ -3,7 +3,7 @@ using System.IO;
 using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
 using System.Runtime.InteropServices;
 using System.Net.Sockets;
 #endif
@@ -17,7 +17,7 @@ namespace SshNet.Agent
         private readonly NamedPipeClientStream? _pipe;
         private readonly Stream _stream;
         private readonly TimeSpan _timeout;
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
         private readonly Socket? _socket;
 #endif
 
@@ -108,7 +108,7 @@ namespace SshNet.Agent
         public SshAgentSocketStream(string socketPath, TimeSpan timeout)
         {
             _timeout = timeout;
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
             if (UseUnixSocket(socketPath))
             {
                 _socket = CreateUnixSocket(timeout);
@@ -122,7 +122,7 @@ namespace SshNet.Agent
             _stream = _pipe;
         }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
         private SshAgentSocketStream(Socket socket, TimeSpan timeout)
         {
             _socket = socket;
@@ -140,7 +140,7 @@ namespace SshNet.Agent
 
         public static async Task<SshAgentSocketStream> ConnectAsync(string socketPath, TimeSpan timeout, CancellationToken cancellationToken)
         {
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
             if (UseUnixSocket(socketPath))
             {
                 var socket = CreateUnixSocket(timeout);
@@ -175,7 +175,7 @@ namespace SshNet.Agent
             return new SshAgentSocketStream(pipe, timeout);
         }
 
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
         /// <summary>
         /// Everything on unix is a unix domain socket; on Windows only paths
         /// that exist as files are (e.g. WSL sockets), never pipe paths.
@@ -221,7 +221,7 @@ namespace SshNet.Agent
             if (!_disposed && disposing)
             {
                 _stream.Dispose();
-#if NETSTANDARD2_1
+#if NETSTANDARD2_1 || NET
                 _socket?.Dispose();
 #endif
                 _pipe?.Dispose();
