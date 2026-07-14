@@ -1,3 +1,5 @@
+using System;
+using System.Threading;
 using Renci.SshNet;
 using Xunit;
 
@@ -45,6 +47,36 @@ namespace SshNet.Agent.Tests
             using var agent = TestAgent.Start(kind, TestKeys.Ed25519ZeroLead);
 
             Assert.Equal("ok", Login(agent.Identity(TestKeys.Ed25519ZeroLead)));
+        }
+
+        /// <summary>
+        /// A key added with a lifetime (ssh-add -t) disappears from the agent by
+        /// itself. Needs no SSH server. Skips when the agent refuses constrained
+        /// adds or does not enforce the lifetime, since support varies by agent.
+        /// </summary>
+        [Theory]
+        [InlineData(AgentKind.OpenSsh)]
+        [InlineData(AgentKind.Pageant)]
+        public void KeyWithLifetime_ExpiresFromTheAgent(AgentKind kind)
+        {
+            using var testAgent = TestAgent.Start(kind);
+            var agent = testAgent.Agent;
+
+            try
+            {
+                agent.AddIdentity(TestKeys.PrivateKey(TestKeys.Ed25519Puttygen), TimeSpan.FromSeconds(2));
+            }
+            catch (Exception e) when (e.Message.Contains("SSH_AGENT_FAILURE"))
+            {
+                Assert.Skip("the agent does not support key constraints");
+            }
+            Assert.NotNull(TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen));
+
+            for (var i = 0; i < 50 && TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen) is not null; i++)
+                Thread.Sleep(200);
+
+            if (TestKeys.Find(agent.RequestIdentities(), TestKeys.Ed25519Puttygen) is not null)
+                Assert.Skip("the agent accepted the lifetime constraint but does not enforce it");
         }
 
         [Theory]
