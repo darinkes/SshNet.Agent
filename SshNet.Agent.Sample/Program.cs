@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.CommandLine;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -21,15 +22,9 @@ using Renci.SshNet;
 namespace SshNet.Agent.Sample
 {
     /// <summary>
-    /// Demonstrates SshNet.Agent against a running key agent:
-    ///
-    ///   SshNet.Agent.Sample [--pageant] [host user]
-    ///
-    /// --pageant talks to PuTTY's Pageant instead of the OpenSSH agent. When a
-    /// host and user are given, the sample additionally authenticates against
-    /// that SSH server with the identities the agent serves. The sample only
+    /// Demonstrates SshNet.Agent against a running key agent. The sample only
     /// removes the keys it added itself; identities already in the agent are
-    /// left alone.
+    /// left alone. See --help for the options.
     /// </summary>
     internal static class Program
     {
@@ -38,10 +33,44 @@ namespace SshNet.Agent.Sample
             "ed25519", "ecdsa256", "ecdsa384", "ecdsa521", "rsa2048", "rsa3072", "rsa4096", "rsa8192"
         };
 
-        private static async Task Main(string[] args)
+        private static Task<int> Main(string[] args)
         {
-            SshAgent agent = args.Contains("--pageant") ? new Pageant() : new SshAgent();
+            var pageantOption = new Option<bool>("--pageant")
+            {
+                Description = "Talk to PuTTY's Pageant instead of the OpenSSH agent"
+            };
+            var hostArgument = new Argument<string?>("host")
+            {
+                Description = "SSH server to authenticate against with the agent identities",
+                Arity = ArgumentArity.ZeroOrOne
+            };
+            var userArgument = new Argument<string?>("user")
+            {
+                Description = "User to authenticate as",
+                Arity = ArgumentArity.ZeroOrOne
+            };
 
+            var command = new RootCommand("Demonstrates SshNet.Agent against a running key agent")
+            {
+                pageantOption,
+                hostArgument,
+                userArgument
+            };
+            command.Validators.Add(result =>
+            {
+                if (result.GetValue(hostArgument) is not null && result.GetValue(userArgument) is null)
+                    result.AddError("A host also needs a user.");
+            });
+            command.SetAction((result, _) => RunDemo(
+                result.GetValue(pageantOption) ? new Pageant() : new SshAgent(),
+                result.GetValue(hostArgument),
+                result.GetValue(userArgument)));
+
+            return command.Parse(args).InvokeAsync();
+        }
+
+        private static async Task<int> RunDemo(SshAgent agent, string? host, string? user)
+        {
             var before = ListedBlobs(await agent.RequestIdentitiesAsync());
             Console.WriteLine($"The agent holds {before.Count} identities.");
 
@@ -57,9 +86,8 @@ namespace SshNet.Agent.Sample
                 await LifetimeDemo(agent);
                 await LockDemo(agent);
 
-                var positional = args.Where(arg => !arg.StartsWith("--")).ToArray();
-                if (positional.Length == 2)
-                    Login(agent, positional[0], positional[1]);
+                if (host is not null && user is not null)
+                    Login(agent, host, user);
             }
             finally
             {
@@ -70,6 +98,8 @@ namespace SshNet.Agent.Sample
                 }
                 Console.WriteLine("Sample keys removed again.");
             }
+
+            return 0;
         }
 
         /// <summary>A key with a lifetime (ssh-add -t) expires from the agent by itself.</summary>
@@ -132,7 +162,7 @@ namespace SshNet.Agent.Sample
 
         private static Stream GetKey(string name)
         {
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"SshNet.Agent.Sample.TestKeys.{name}");
+            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"SshNet.Agent.Sample.TestKeys.{name}")!;
         }
     }
 }
