@@ -130,9 +130,10 @@ namespace SshNet.Agent
         /// <summary>Async variant of <see cref="RemoveIdentity"/>.</summary>
         public async Task RemoveIdentityAsync(SshAgentPrivateKey sshAgentPrivateKey, CancellationToken cancellationToken = default)
         {
-            if (((KeyHostAlgorithm)sshAgentPrivateKey.HostKeyAlgorithms.First()).Key is not IAgentKey agentKey)
-                throw new ArgumentException("Just AgentKeys can be removed");
-            _ = await SendAsync(new RemoveIdentity(agentKey), cancellationToken).ConfigureAwait(false);
+            // HostAlgorithm.Data is the blob the agent listed the identity
+            // under - the key blob for plain keys, the certificate blob for
+            // certificates
+            _ = await SendAsync(new RemoveIdentity(sshAgentPrivateKey.HostKeyAlgorithms.First().Data), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>Async variant of <see cref="RemoveIdentities"/>.</summary>

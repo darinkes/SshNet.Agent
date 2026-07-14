@@ -60,6 +60,33 @@ namespace SshNet.Agent.Tests
             Assert.Equal(19, request.Byte()); // SSH2_AGENTC_REMOVE_ALL_IDENTITIES
         }
 
+        /// <summary>
+        /// Like the sync API, async removal uses the blob the agent listed the
+        /// identity under, so it also works for certificate identities.
+        /// </summary>
+        [Fact]
+        public async Task RemoveIdentityAsync_RemovesByTheListedBlob()
+        {
+            using var fake = new FakeAgent();
+            var blob = TestKeys.PublicKeyBlob(TestKeys.Ed25519Cert);
+            fake.EnqueueResponse(Wire.Cat(
+                new[] { Ssh2AgentIdentitiesAnswer },
+                Wire.U32(1),
+                Wire.Str(blob), Wire.Str("cert identity")));
+            var agent = fake.CreateClient();
+            var identity = Assert.Single(await agent.RequestIdentitiesAsync(TestContext.Current.CancellationToken));
+            fake.EnqueueResponse(new[] { SshAgentSuccess });
+
+            await agent.RemoveIdentityAsync(identity, TestContext.Current.CancellationToken);
+
+            fake.Requests.TryDequeue(out _); // the request-identities message
+            Assert.True(fake.Requests.TryDequeue(out var raw));
+            var request = new WireReader(raw!);
+            Assert.Equal(18, request.Byte()); // SSH2_AGENTC_REMOVE_IDENTITY
+            Assert.Equal(blob, request.Str());
+            Assert.True(request.AtEnd);
+        }
+
         [Fact]
         public async Task UnresponsiveAgent_TimesOutAsync()
         {
