@@ -1,10 +1,14 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Renci.SshNet;
 
+// The public keys of the embedded sample keys, ready to paste into
+// ~/.ssh/authorized_keys on the demo server for the host/user login:
+//
 // ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIE5W6BcNnMuNgLYuUa18F/Ci8dzPqeIO/H333n0yv4o6
 // ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEqKSQ9hDmbqz04emjXekb3wRuP1SIhGC+kRd8VjbjSfZA/av6nTU7d2wkxO0IFIjeC7x95tvtVvxXQqNa8VRXE=
 // ecdsa-sha2-nistp384 AAAAE2VjZHNhLXNoYTItbmlzdHAzODQAAAAIbmlzdHAzODQAAABhBEccBcSqsk28fdeLH8FBKG2AbcLslKl8DoJACAK3QoVMz1Mj/0gY/FOkqMbYgR6fAlxM06YJI8GmFO6jbcqX9P0MvyUfAXN1Tt4ljbn0/7fAP08HP+gzGSHZsTj1l0MGjA==
@@ -16,64 +20,119 @@ using Renci.SshNet;
 
 namespace SshNet.Agent.Sample
 {
-    class Program
+    /// <summary>
+    /// Demonstrates SshNet.Agent against a running key agent:
+    ///
+    ///   SshNet.Agent.Sample [--pageant] [host user]
+    ///
+    /// --pageant talks to PuTTY's Pageant instead of the OpenSSH agent. When a
+    /// host and user are given, the sample additionally authenticates against
+    /// that SSH server with the identities the agent serves. The sample only
+    /// removes the keys it added itself; identities already in the agent are
+    /// left alone.
+    /// </summary>
+    internal static class Program
     {
-        static void Main(string[] args)
+        private static readonly string[] SampleKeys =
         {
+            "ed25519", "ecdsa256", "ecdsa384", "ecdsa521", "rsa2048", "rsa3072", "rsa4096", "rsa8192"
+        };
+
+        private static async Task Main(string[] args)
+        {
+            SshAgent agent = args.Contains("--pageant") ? new Pageant() : new SshAgent();
+
+            var before = ListedBlobs(await agent.RequestIdentitiesAsync());
+            Console.WriteLine($"The agent holds {before.Count} identities.");
+
             try
             {
-#if NETFRAMEWORK
-                var agent = new Pageant();
-#else
-                var agent = new SshAgent();
-#endif
+                Console.WriteLine("Adding the sample keys ...");
+                foreach (var name in SampleKeys)
+                    await agent.AddIdentityAsync(new PrivateKeyFile(GetKey(name)));
 
-                agent.RemoveAllIdentities();
+                foreach (var identity in await agent.RequestIdentitiesAsync())
+                    Console.WriteLine($"  {string.Join(", ", identity.HostKeyAlgorithms.Select(algorithm => algorithm.Name))}");
 
-                var testKeys = new[]
+                await LifetimeDemo(agent);
+                await LockDemo(agent);
+
+                var positional = args.Where(arg => !arg.StartsWith("--")).ToArray();
+                if (positional.Length == 2)
+                    Login(agent, positional[0], positional[1]);
+            }
+            finally
+            {
+                foreach (var identity in await agent.RequestIdentitiesAsync())
                 {
-                    "ed25519", "ecdsa256", "ecdsa384", "ecdsa521", "rsa2048", "rsa3072", "rsa4096", "rsa8192"
-                };
-
-                foreach (var testKey in testKeys)
-                {
-                    Console.WriteLine($"Testing Key {testKey}");
-                    var keyFile = new PrivateKeyFile(GetKey(testKey));
-                    agent.AddIdentity(keyFile);
-
-                    var keys = agent.RequestIdentities();
-
-                    try
-                    {
-                        using var client = new SshClient("localhost", Environment.GetEnvironmentVariable("USER") ?? Environment.GetEnvironmentVariable("USERNAME"), keys.ToArray<IPrivateKeySource>());
-                        client.Connect();
-                        Console.WriteLine(client.RunCommand("hostname").Result.Trim());
-                        Console.WriteLine($"Key {testKey} worked!");
-                        Console.WriteLine();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        Console.ReadLine();
-                    }
-                    agent.RemoveIdentities(keys.ToList());
-
-                    if (agent.RequestIdentities().Any())
-                        throw new Exception("There should be no keys!");
+                    if (!before.Contains(Blob(identity)))
+                        await agent.RemoveIdentityAsync(identity);
                 }
+                Console.WriteLine("Sample keys removed again.");
+            }
+        }
+
+        /// <summary>A key with a lifetime (ssh-add -t) expires from the agent by itself.</summary>
+        private static async Task LifetimeDemo(SshAgent agent)
+        {
+            Console.WriteLine("Re-adding the ed25519 key with a 2s lifetime (ssh-add -t) ...");
+            try
+            {
+                agent.AddIdentity(new PrivateKeyFile(GetKey("ed25519")), TimeSpan.FromSeconds(2));
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-                throw;
+                Console.WriteLine($"  this agent does not support constraints ({e.Message})");
+                return;
             }
-            Console.WriteLine("Done");
-            Console.ReadLine();
+
+            await Task.Delay(TimeSpan.FromSeconds(3));
+            var count = (await agent.RequestIdentitiesAsync()).Length;
+            Console.WriteLine($"  after 3s the agent lists {count} identities, the key expired");
         }
 
-        private static Stream GetKey(string keyname)
+        /// <summary>A locked agent (ssh-add -x) hides its identities until unlocked.</summary>
+        private static async Task LockDemo(SshAgent agent)
         {
-            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"SshNet.Agent.Sample.TestKeys.{keyname}");
+            Console.WriteLine("Locking the agent (ssh-add -x) ...");
+            try
+            {
+                agent.Lock("passphrase");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"  this agent does not support locking ({e.Message})");
+                return;
+            }
+
+            Console.WriteLine($"  locked: the agent lists {(await agent.RequestIdentitiesAsync()).Length} identities");
+            agent.Unlock("passphrase");
+            Console.WriteLine($"  unlocked: the agent lists {(await agent.RequestIdentitiesAsync()).Length} identities again");
+        }
+
+        private static void Login(SshAgent agent, string host, string user)
+        {
+            Console.WriteLine($"Authenticating as {user}@{host} with the agent identities ...");
+            var keys = agent.RequestIdentities();
+            using var client = new SshClient(new ConnectionInfo(host, user,
+                new PrivateKeyAuthenticationMethod(user, keys)));
+            client.Connect();
+            Console.WriteLine($"  {client.RunCommand("hostname").Result.Trim()}");
+        }
+
+        private static HashSet<string> ListedBlobs(IEnumerable<SshAgentPrivateKey> identities)
+        {
+            return new HashSet<string>(identities.Select(Blob));
+        }
+
+        private static string Blob(SshAgentPrivateKey identity)
+        {
+            return Convert.ToBase64String(identity.HostKeyAlgorithms.First().Data);
+        }
+
+        private static Stream GetKey(string name)
+        {
+            return Assembly.GetExecutingAssembly().GetManifestResourceStream($"SshNet.Agent.Sample.TestKeys.{name}");
         }
     }
 }
