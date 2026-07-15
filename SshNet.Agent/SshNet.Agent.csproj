@@ -37,6 +37,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="SshNet.Agent.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="SSH.NET" Version="[2024.2.0,2026.0)" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.300" PrivateAssets="All" />
     </ItemGroup>
