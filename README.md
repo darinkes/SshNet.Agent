@@ -35,7 +35,8 @@ FIDO identities (`ssh-keygen -t ed25519-sk` / `-t ecdsa-sk`) held by the agent
 are offered to the server automatically. The agent drives the authenticator, so
 touch (and, for verify-required keys, the PIN) is prompted at sign time; the
 private key never leaves the hardware. These identities have no SSH.NET `Key`,
-so `SshAgentPrivateKey.Key` is `null` for them.
+so `SshAgentPrivateKey.Key` is `null` for them; their comment is still available
+via `SshAgentPrivateKey.Comment`, which every identity carries.
 
 ### RSA and legacy ssh-rsa
 
