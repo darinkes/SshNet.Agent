@@ -14,6 +14,7 @@ namespace SshNet.Agent.Tests
     {
         OpenSsh,
         Pageant,
+        PageantLegacy,
     }
 
     internal static class TestEnvironment
@@ -54,7 +55,9 @@ namespace SshNet.Agent.Tests
             try
             {
                 if (kind == AgentKind.Pageant)
-                    testAgent.StartPageant();
+                    testAgent.StartPageant(legacy: false);
+                else if (kind == AgentKind.PageantLegacy)
+                    testAgent.StartPageant(legacy: true);
                 else
                     testAgent.StartOpenSsh();
             }
@@ -103,10 +106,12 @@ namespace SshNet.Agent.Tests
                 Agent.AddIdentity(TestKeys.PrivateKey(key));
         }
 
-        private void StartPageant()
+        private void StartPageant(bool legacy)
         {
             if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
+                if (legacy)
+                    Assert.Skip("Pageant WM_COPYDATA is Windows only");
                 StartUnixPageant();
                 return;
             }
@@ -126,12 +131,15 @@ namespace SshNet.Agent.Tests
                 Process.Start(new ProcessStartInfo(pageantExe, arguments))?.Dispose();
             }
 
-            Agent = new Pageant();
+            // WM_COPYDATA is always available, so probe with it (null pipe = forced
+            // WM_COPYDATA) to know Pageant is fully up; only then is its named pipe
+            // (if any) certain to exist.
+            var probe = new Pageant((string?)null, null);
             WaitUntil(() =>
             {
                 try
                 {
-                    Agent.RequestIdentities();
+                    probe.RequestIdentities();
                     return true;
                 }
                 catch
@@ -139,6 +147,12 @@ namespace SshNet.Agent.Tests
                     return false;
                 }
             }, "Pageant");
+
+            var pageant = legacy ? probe : new Pageant();
+            if (!legacy && !pageant.UsesNamedPipe)
+                // required gate, not a plain skip: no pipe on a modern Pageant is a regression
+                TestEnvironment.Unavailable("Pageant", "this Pageant offers no OpenSSH named pipe (needs 0.77+)");
+            Agent = pageant;
 
             foreach (var key in _keys.Except(puttyKeys))
                 Agent.AddIdentity(TestKeys.PrivateKey(key));

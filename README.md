@@ -94,6 +94,16 @@ client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
 ```
 
+`Pageant` automatically talks to Pageant 0.77+ over its OpenSSH named pipe when
+one is available (real async I/O, no WM_COPYDATA 8 KB message limit), and falls
+back to the legacy WM_COPYDATA interface otherwise. No code change is needed.
+
+The `Pageant` class is Windows only (its transports, WM_COPYDATA and the Windows
+named pipe, do not exist elsewhere). On Linux, PuTTY's `pageant` serves the
+standard agent protocol on a unix socket, so use `SshAgent` instead: `pageant`
+sets `SSH_AUTH_SOCK`, which `new SshAgent()` picks up, or pass the socket path to
+`new SshAgent(path, null)`.
+
 ### OpenSSH Certificates
 
 Certificate identities held by the agent (`*-cert-v01@openssh.com`) are offered

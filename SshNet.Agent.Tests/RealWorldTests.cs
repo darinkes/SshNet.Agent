@@ -80,6 +80,23 @@ namespace SshNet.Agent.Tests
                 Assert.Skip("the agent accepted the lifetime constraint but does not enforce it");
         }
 
+        /// <summary>
+        /// Pageant is reachable two ways: the modern OpenSSH named pipe (0.77+,
+        /// used by default) and the legacy WM_COPYDATA window message. Both must
+        /// authenticate. WM_COPYDATA is Windows only; the named pipe case skips
+        /// when the running Pageant is too old to offer one.
+        /// </summary>
+        [Theory]
+        [InlineData(AgentKind.Pageant)]
+        [InlineData(AgentKind.PageantLegacy)]
+        public void Pageant_AuthenticatesOverEitherTransport(AgentKind kind)
+        {
+            _server.SkipUnlessAvailable();
+            using var agent = TestAgent.Start(kind, TestKeys.Ed25519Puttygen);
+
+            Assert.Equal("ok", Login(agent.Identity(TestKeys.Ed25519Puttygen)));
+        }
+
         [Theory]
         [InlineData(AgentKind.OpenSsh)]
         [InlineData(AgentKind.Pageant)]
