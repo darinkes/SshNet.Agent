@@ -25,10 +25,14 @@ namespace SshNet.Agent
         /// </summary>
         public Key? Key { get; }
 
+        /// <summary>The comment the agent lists the identity under; empty when it has none.</summary>
+        public string Comment { get; }
+
         /// <summary>The identity of a plain key held by the agent.</summary>
         public SshAgentPrivateKey(SshAgent agent, Key key)
         {
             Key = key;
+            Comment = key.Comment ?? "";
 
             if (Key is RsaAgentKey rsaKey)
             {
@@ -49,9 +53,10 @@ namespace SshNet.Agent
         /// The identity of a FIDO/security key held by the agent
         /// (sk-ecdsa-sha2-nistp256@openssh.com or sk-ssh-ed25519@openssh.com).
         /// </summary>
-        public SshAgentPrivateKey(SshAgent agent, byte[] keyData, string keyType)
+        public SshAgentPrivateKey(SshAgent agent, byte[] keyData, string keyType, string comment = "")
         {
             Key = null; // no SSH.NET Key type for sk-* keys
+            Comment = comment;
             _hostAlgorithms.Add(new SkAgentHostAlgorithm(agent, keyType, keyData));
         }
 
@@ -62,6 +67,7 @@ namespace SshNet.Agent
         public SshAgentPrivateKey(SshAgent agent, Certificate certificate, byte[] certificateData)
         {
             Key = certificate.Key;
+            Comment = certificate.Key.Comment ?? "";
 
             // signing echoes the whole certificate blob back to the agent
             var identity = new CertificateAgentIdentity(agent, certificateData);

@@ -56,7 +56,7 @@ namespace SshNet.Agent.AgentMessage
                         break;
                     case "sk-ecdsa-sha2-nistp256@openssh.com":
                     case "sk-ssh-ed25519@openssh.com":
-                        keys.Add(new SshAgentPrivateKey(_agent, keyData, keyType));
+                        keys.Add(new SshAgentPrivateKey(_agent, keyData, keyType, comment));
                         continue;
                     case "ssh-rsa-cert-v01@openssh.com":
                     case "ecdsa-sha2-nistp256-cert-v01@openssh.com":

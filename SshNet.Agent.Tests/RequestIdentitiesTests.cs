@@ -28,6 +28,7 @@ namespace SshNet.Agent.Tests
             Assert.Equal("sk-ssh-ed25519@openssh.com", algorithm.Name);
             Assert.Equal(skBlob, algorithm.Data);
             Assert.Null(identity.Key); // no SSH.NET Key type for sk-* keys
+            Assert.Equal("fido key", identity.Comment); // ... but the comment is still surfaced
         }
 
         [Fact]
@@ -48,6 +49,7 @@ namespace SshNet.Agent.Tests
             var algorithm = (KeyHostAlgorithm)identity.HostKeyAlgorithms.First();
             Assert.Equal(ed25519Blob, algorithm.Data);
             Assert.Equal("ed25519 key", algorithm.Key!.Comment);
+            Assert.Equal("ed25519 key", identity.Comment);
         }
 
         [Fact]
