@@ -1,3 +1,4 @@
+using System.IO;
 using System.Linq;
 using Renci.SshNet.Security;
 using Xunit;
@@ -59,6 +60,17 @@ namespace SshNet.Agent.Tests
             fake.EnqueueResponse(Wire.Cat(new[] { Ssh2AgentIdentitiesAnswer }, Wire.U32(0)));
 
             Assert.Empty(fake.CreateClient().RequestIdentities());
+        }
+
+        [Fact]
+        public void OversizedResponse_IsRejected()
+        {
+            using var fake = new FakeAgent();
+            // a length prefix beyond OpenSSH's AGENT_MAX_MSGLEN (256 KiB) must be refused,
+            // not blindly allocated
+            fake.EnqueueResponse(new byte[256 * 1024 + 1]);
+
+            Assert.Throws<InvalidDataException>(() => fake.CreateClient().RequestIdentities());
         }
     }
 }
