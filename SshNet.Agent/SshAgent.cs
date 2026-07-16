@@ -131,9 +131,12 @@ namespace SshNet.Agent
         {
             using var socketStream = new SshAgentSocketStream(_socketPath, _timeout);
             using var writer = new AgentWriter(socketStream);
-            using var reader = new AgentReader(socketStream);
-
             message.To(writer);
+
+            // read the whole framed response first, bounding its length like the async path
+            var response = ReadMessage(socketStream);
+            using var responseStream = new MemoryStream(response);
+            using var reader = new AgentReader(responseStream);
             return message.From(reader);
         }
 
@@ -240,6 +243,32 @@ namespace SshNet.Agent
             while (offset < buffer.Length)
             {
                 var read = await stream.ReadAsync(buffer, offset, buffer.Length - offset, cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                    throw new EndOfStreamException("The agent closed the connection mid-message");
+                offset += read;
+            }
+        }
+
+        /// <summary>Synchronous counterpart of <see cref="ReadMessageAsync"/>.</summary>
+        private static byte[] ReadMessage(Stream stream)
+        {
+            var header = new byte[4];
+            ReadExactly(stream, header, 0);
+            var length = (header[0] << 24) | (header[1] << 16) | (header[2] << 8) | header[3];
+            if (length < 1 || length > MaxMessageLength)
+                throw new InvalidDataException($"Invalid agent message length {length}");
+
+            var message = new byte[4 + length];
+            Buffer.BlockCopy(header, 0, message, 0, 4);
+            ReadExactly(stream, message, 4);
+            return message;
+        }
+
+        private static void ReadExactly(Stream stream, byte[] buffer, int offset)
+        {
+            while (offset < buffer.Length)
+            {
+                var read = stream.Read(buffer, offset, buffer.Length - offset);
                 if (read == 0)
                     throw new EndOfStreamException("The agent closed the connection mid-message");
                 offset += read;
