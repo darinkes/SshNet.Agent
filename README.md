@@ -61,6 +61,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 - Removing all Keys
 - Locking and Unlocking the Agent
 - Async API
+- Hosting an Agent (SshAgentServer)
 
 ## Agent Protocol Documentation
 [draft-miller-ssh-agent-02](https://tools.ietf.org/html/draft-miller-ssh-agent-02)
@@ -165,6 +166,34 @@ agent.Lock("passphrase");
 // agent.RequestIdentities() is empty now
 agent.Unlock("passphrase");
 ```
+
+### Hosting an Agent
+
+`SshAgentServer` is a minimal ssh-agent: it holds SSH.NET keys and answers the
+agent protocol (list and sign) over a unix domain socket (off Windows) or a
+named pipe (on Windows). Any SSH client can use it - including this library's
+own `SshAgent`, `ssh`, or `git`. Signing is done with the in-process keys, so
+the key material can come from anywhere your process can reach (a file, a
+generated key, an HSM/Key Vault wrapper).
+
+```csharp
+using var server = new SshAgentServer(new PrivateKeyFile("test.key"));
+server.Start("/tmp/my-agent.sock"); // a named pipe name on Windows
+
+// point ssh (or SshAgent) at it
+Environment.SetEnvironmentVariable("SSH_AUTH_SOCK", "/tmp/my-agent.sock");
+var keys = new SshAgent("/tmp/my-agent.sock", null).RequestIdentities();
+```
+
+Keys are added and removed through the .NET API (`new SshAgentServer(keys)`,
+`Add`, `Remove`) and via the protocol's remove/lock requests; adding a key over
+the protocol (`ssh-add`) is answered with a failure. Unix domain sockets need
+the netstandard2.1 or .NET build.
+
+The endpoint is a signing authority: anyone who can connect to it can list the
+keys and use them to sign. Keep it private - on .NET 7 and later the unix socket
+is created owner-only, otherwise put it in a directory only you can access; the
+Windows named pipe is created with the default owner-scoped ACL.
 
 ## Resharper Warning
 
