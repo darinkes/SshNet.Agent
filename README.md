@@ -56,6 +56,7 @@ var agent = new SshAgent { IncludeLegacySshRsa = true };
 - Auth with OpenSSH Certificates
 - Adding Keys
 - Adding Keys with Constraints (lifetime, confirm)
+- Adding and Removing PKCS#11 / Smartcard Keys
 - Getting Keys
 - Removing Keys
 - Removing all Keys
@@ -164,6 +165,32 @@ var agent = new SshAgent();
 agent.Lock("passphrase");
 // agent.RequestIdentities() is empty now
 agent.Unlock("passphrase");
+```
+
+### PKCS#11 / Smartcard Keys
+
+Keys held on a PKCS#11 token can be added to and removed from the agent, like
+`ssh-add -s`/`ssh-add -e`. The agent loads the key through the PKCS#11 provider
+(a shared library path) and unlocks the token with the PIN; the private key
+never leaves the token.
+
+```csharp
+var agent = new SshAgent();
+
+// ssh-add -s /usr/lib/opensc-pkcs11.so
+agent.AddSmartcardIdentity("/usr/lib/opensc-pkcs11.so", "1234");
+
+var keys = agent.RequestIdentities();
+
+// ssh-add -e /usr/lib/opensc-pkcs11.so
+agent.RemoveSmartcardIdentity("/usr/lib/opensc-pkcs11.so");
+```
+
+Smartcard keys can be added with the same lifetime/confirm constraints as
+regular keys:
+
+```csharp
+agent.AddSmartcardIdentity("/usr/lib/opensc-pkcs11.so", "1234", TimeSpan.FromMinutes(10), confirm: true);
 ```
 
 ## Resharper Warning
