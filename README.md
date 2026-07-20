@@ -125,6 +125,36 @@ using var client = new SshClient("ssh.foo.com", "root", keys);
 client.Connect();
 ```
 
+### Minting Certificates with SshNet.Keygen
+
+The certificate above can be produced in .NET with
+[SshNet.Keygen](https://github.com/darinkes/SshNet.Keygen), so the whole
+short-lived-certificate flow - mint, load into the agent, authenticate - stays
+in one process without shelling out to `ssh-keygen`:
+
+```csharp
+// mint a short-lived user certificate for test.key, signed by your CA
+var userKey = new PrivateKeyFile("test.key");
+var certificate = new SshCertificateBuilder(userKey)
+    .WithKeyId("root@example.com")
+    .WithPrincipal("root")
+    .WithValidity(DateTime.UtcNow, DateTime.UtcNow.AddHours(8))
+    .SignWith(new PrivateKeyFile("ca"));
+
+File.WriteAllText("test-cert.pub", certificate.ToOpenSshPublicFormat());
+
+// load the key together with the freshly minted certificate ...
+var agent = new SshAgent();
+agent.AddIdentity(new PrivateKeyFile("test.key", null, "test-cert.pub"));
+
+// ... and authenticate against a server that trusts the CA
+using var client = new SshClient("ssh.foo.com", "root", agent.RequestIdentities());
+client.Connect();
+```
+
+The same certificate can be served through an agent server, or used directly
+with SSH.NET without an agent.
+
 ### Async
 
 All agent operations are also available asynchronously and take an optional
