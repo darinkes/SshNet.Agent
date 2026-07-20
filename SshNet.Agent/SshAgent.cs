@@ -119,6 +119,33 @@ namespace SshNet.Agent
             _ = Send(new AddIdentity(keyFile, lifetime, confirm));
         }
 
+        /// <summary>
+        /// Adds a key held on a PKCS#11 token to the agent, like ssh-add -s. The
+        /// agent loads the key through the PKCS#11 provider (a shared library
+        /// path) and unlocks the token with the PIN; the private key stays on the
+        /// token.
+        /// </summary>
+        public void AddSmartcardIdentity(string pkcs11Provider, string pin)
+        {
+            _ = Send(new AddSmartcardKey(pkcs11Provider, pin));
+        }
+
+        /// <summary>
+        /// Adds a PKCS#11 token key with constraints, like ssh-add -s -t/-c: the
+        /// agent removes the key again after <paramref name="lifetime"/>, and with
+        /// <paramref name="confirm"/> it asks for confirmation on every use.
+        /// </summary>
+        public void AddSmartcardIdentity(string pkcs11Provider, string pin, TimeSpan? lifetime, bool confirm = false)
+        {
+            _ = Send(new AddSmartcardKey(pkcs11Provider, pin, lifetime, confirm));
+        }
+
+        /// <summary>Removes a PKCS#11 token key from the agent, like ssh-add -e.</summary>
+        public void RemoveSmartcardIdentity(string pkcs11Provider, string pin = "")
+        {
+            _ = Send(new RemoveSmartcardKey(pkcs11Provider, pin));
+        }
+
         internal byte[] Sign(IAgentKey key, byte[] data, uint flags = 0, bool rawSignature = false)
         {
             var signature = Send(new RequestSign(key, data, flags, rawSignature));
@@ -181,6 +208,24 @@ namespace SshNet.Agent
         public async Task AddIdentityAsync(IPrivateKeySource keyFile, TimeSpan? lifetime, bool confirm = false, CancellationToken cancellationToken = default)
         {
             _ = await SendAsync(new AddIdentity(keyFile, lifetime, confirm), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="AddSmartcardIdentity(string, string)"/>.</summary>
+        public async Task AddSmartcardIdentityAsync(string pkcs11Provider, string pin, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new AddSmartcardKey(pkcs11Provider, pin), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="AddSmartcardIdentity(string, string, TimeSpan?, bool)"/>.</summary>
+        public async Task AddSmartcardIdentityAsync(string pkcs11Provider, string pin, TimeSpan? lifetime, bool confirm = false, CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new AddSmartcardKey(pkcs11Provider, pin, lifetime, confirm), cancellationToken).ConfigureAwait(false);
+        }
+
+        /// <summary>Async variant of <see cref="RemoveSmartcardIdentity"/>.</summary>
+        public async Task RemoveSmartcardIdentityAsync(string pkcs11Provider, string pin = "", CancellationToken cancellationToken = default)
+        {
+            _ = await SendAsync(new RemoveSmartcardKey(pkcs11Provider, pin), cancellationToken).ConfigureAwait(false);
         }
 
         /// <summary>Async variant of <see cref="Lock"/>.</summary>
