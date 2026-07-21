@@ -22,8 +22,14 @@ namespace SshNet.Agent
 
         public byte[] ReadStringAsBytes()
         {
-            var len = (int)ReadUInt32();
-            return base.ReadBytes(len);
+            var length = ReadUInt32();
+            // the message is already bounded, so any inner length must fit in it
+            if (length > BaseStream.Length - BaseStream.Position)
+                throw new InvalidDataException($"Invalid string length {length} in an agent message");
+            var data = base.ReadBytes((int)length);
+            if (data.Length < length)
+                throw new InvalidDataException("The agent message ended mid-string");
+            return data;
         }
 
         public override string ReadString()
