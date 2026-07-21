@@ -111,15 +111,37 @@ namespace SshNet.Agent
 #if NETSTANDARD2_1 || NET
             if (UseUnixSocket(socketPath))
             {
-                _socket = CreateUnixSocket(timeout);
-                _socket.Connect(new UnixDomainSocketEndPoint(socketPath));
-                _stream = new NetworkStream(_socket);
+                var socket = CreateUnixSocket(timeout);
+                try
+                {
+                    // sync Connect has no timeout of its own, so bound it here
+                    var connect = socket.BeginConnect(new UnixDomainSocketEndPoint(socketPath), null, null);
+                    if (!connect.AsyncWaitHandle.WaitOne(timeout))
+                        throw new TimeoutException($"Could not connect to the ssh-agent within {timeout.TotalSeconds:0.#}s");
+                    socket.EndConnect(connect);
+                }
+                catch
+                {
+                    socket.Dispose();
+                    throw;
+                }
+                _socket = socket;
+                _stream = new NetworkStream(socket);
                 return;
             }
 #endif
-            _pipe = CreatePipe(socketPath);
-            _pipe.Connect(Convert.ToInt32(timeout.TotalMilliseconds));
-            _stream = _pipe;
+            var pipe = CreatePipe(socketPath);
+            try
+            {
+                pipe.Connect(Convert.ToInt32(timeout.TotalMilliseconds));
+            }
+            catch
+            {
+                pipe.Dispose();
+                throw;
+            }
+            _pipe = pipe;
+            _stream = pipe;
         }
 
 #if NETSTANDARD2_1 || NET
