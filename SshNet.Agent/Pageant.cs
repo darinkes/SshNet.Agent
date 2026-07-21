@@ -111,13 +111,36 @@ namespace SshNet.Agent
             if (_useNamedPipe)
                 return base.Send(message);
 
+            byte[] request;
+            using (var requestStream = new MemoryStream())
+            {
+                using (var writer = new AgentWriter(requestStream))
+                    message.To(writer);
+                request = requestStream.ToArray();
+            }
+            if (request.Length > PageantSocketStream.AgentMaxMsglen)
+                throw new SshAgentException($"The request ({request.Length} bytes) is too large for the legacy 8 KB WM_COPYDATA transport; use the Pageant named pipe");
+
             using var socketStream = new PageantSocketStream();
-            using var writer = new AgentWriter(socketStream);
             using var reader = new AgentReader(socketStream);
 
-            message.To(writer);
+            socketStream.Write(request, 0, request.Length);
             socketStream.Send();
+
+            // bound the response before parsing, like ReadMessage does for pipes
+            ValidateResponseLength((int)reader.ReadUInt32());
+            socketStream.Position = 0;
             return message.From(reader);
+        }
+
+        /// <summary>
+        /// Rejects a WM_COPYDATA response length that cannot fit the fixed-size
+        /// 8 KB map. Internal for testing.
+        /// </summary>
+        internal static void ValidateResponseLength(int length)
+        {
+            if (length < 1 || length > PageantSocketStream.AgentMaxMsglen - 4)
+                throw new InvalidDataException($"Invalid agent message length {length}");
         }
 
         internal override Task<object?> SendAsync(IAgentMessage message, CancellationToken cancellationToken)

@@ -7,7 +7,7 @@ namespace SshNet.Agent
 {
     internal class PageantSocketStream : Stream
     {
-        private const int AgentMaxMsglen = 8192;
+        internal const int AgentMaxMsglen = 8192;
         private const long AgentCopydataId = 0x804e50ba;
         private const int WmCopydata = 0x004A;
 
