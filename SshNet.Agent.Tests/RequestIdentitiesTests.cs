@@ -32,6 +32,32 @@ namespace SshNet.Agent.Tests
             Assert.Equal("fido key", identity.Comment); // ... but the comment is still surfaced
         }
 
+        [Theory]
+        [InlineData("sk-ssh-ed25519-cert-v01@openssh.com")]
+        [InlineData("sk-ecdsa-sha2-nistp256-cert-v01@openssh.com")]
+        public void FidoCertificate_IsOfferedWithItsBlobAndName(string keyType)
+        {
+            using var fake = new FakeAgent();
+            // the sk cert blob is echoed verbatim, so its inner layout is opaque here
+            var skCertBlob = Wire.Cat(
+                Wire.Str(keyType),
+                Wire.Str(new byte[32]), // nonce
+                Wire.Str(new byte[32]), // public key
+                Wire.Str("ssh:"));
+            fake.EnqueueResponse(Wire.Cat(
+                new[] { Ssh2AgentIdentitiesAnswer },
+                Wire.U32(1),
+                Wire.Str(skCertBlob), Wire.Str("fido cert")));
+
+            var identity = Assert.Single(fake.CreateClient().RequestIdentities());
+
+            var algorithm = identity.HostKeyAlgorithms.First();
+            Assert.Equal(keyType, algorithm.Name);
+            Assert.Equal(skCertBlob, algorithm.Data);
+            Assert.Null(identity.Key);
+            Assert.Equal("fido cert", identity.Comment);
+        }
+
         [Fact]
         public void UnknownKeyTypes_AreSkipped()
         {

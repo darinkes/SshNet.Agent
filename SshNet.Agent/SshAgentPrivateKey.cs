@@ -51,7 +51,8 @@ namespace SshNet.Agent
 
         /// <summary>
         /// The identity of a FIDO/security key held by the agent
-        /// (sk-ecdsa-sha2-nistp256@openssh.com or sk-ssh-ed25519@openssh.com).
+        /// (sk-ecdsa-sha2-nistp256@openssh.com or sk-ssh-ed25519@openssh.com,
+        /// plain or -cert-v01).
         /// </summary>
         public SshAgentPrivateKey(SshAgent agent, byte[] keyData, string keyType, string comment = "")
         {

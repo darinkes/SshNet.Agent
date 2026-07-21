@@ -5,9 +5,10 @@ namespace SshNet.Agent.Keys
 {
     /// <summary>
     /// A FIDO/security-key identity (sk-ecdsa-sha2-nistp256@openssh.com or
-    /// sk-ssh-ed25519@openssh.com). SSH.NET has no <see cref="Key"/> type for
-    /// these, so both the public-key blob and the signature (which carries the
-    /// sk flags and counter) come straight from the agent, unchanged.
+    /// sk-ssh-ed25519@openssh.com, plain or -cert-v01). SSH.NET has no
+    /// <see cref="Key"/> type for these, so both the public-key blob and the
+    /// signature (which carries the sk flags and counter) come straight from
+    /// the agent, unchanged.
     /// </summary>
     internal class SkAgentHostAlgorithm : HostAlgorithm, IAgentKey
     {
