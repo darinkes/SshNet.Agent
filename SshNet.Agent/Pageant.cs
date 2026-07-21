@@ -83,7 +83,8 @@ namespace SshNet.Agent
             {
                 entries = Directory.GetFiles(PipeDirectory, PipePrefix + "*");
             }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            // net48 throws ArgumentException for invalid chars in other pipes' names
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException or ArgumentException)
             {
                 return null; // namespace not listable, fall back to WM_COPYDATA
             }
