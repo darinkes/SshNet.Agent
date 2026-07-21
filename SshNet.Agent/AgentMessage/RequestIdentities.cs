@@ -56,6 +56,10 @@ namespace SshNet.Agent.AgentMessage
                         break;
                     case "sk-ecdsa-sha2-nistp256@openssh.com":
                     case "sk-ssh-ed25519@openssh.com":
+                    // sk certificates keep the sk signature format, so the same
+                    // blob-verbatim path serves them
+                    case "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com":
+                    case "sk-ssh-ed25519-cert-v01@openssh.com":
                         keys.Add(new SshAgentPrivateKey(_agent, keyData, keyType, comment));
                         continue;
                     case "ssh-rsa-cert-v01@openssh.com":
