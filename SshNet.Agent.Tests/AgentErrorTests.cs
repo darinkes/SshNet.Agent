@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Renci.SshNet;
@@ -38,6 +39,19 @@ namespace SshNet.Agent.Tests
 
             // the sign request is not answered with SSH2_AGENT_SIGN_RESPONSE
             Assert.Throws<SshAgentFailureException>(() => algorithm.Sign(new byte[] { 1, 2, 3 }));
+        }
+
+        [Fact]
+        public void HugeClaimedStringLength_ThrowsInvalidDataException()
+        {
+            using var fake = new FakeAgent();
+            // one identity whose key blob claims ~4 GB but carries no data
+            fake.EnqueueResponse(Wire.Cat(
+                new[] { Ssh2AgentIdentitiesAnswer },
+                Wire.U32(1),
+                Wire.U32(0xfffffff0u)));
+
+            Assert.Throws<InvalidDataException>(() => fake.CreateClient().RequestIdentities());
         }
 
         [Fact]
