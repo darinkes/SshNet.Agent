@@ -182,3 +182,8 @@ using var client = new SshClient("ssh.foo.com", "root", keys.ToArray<IPrivateKey
 client.Connect();
 Console.WriteLine(client.RunCommand("hostname").Result);
 ```
+
+## Related Projects
+
+* [SshNet.Keygen](https://github.com/darinkes/SshNet.Keygen) - generate and export SSH authentication keys in OpenSSH and PuTTY format
+* [SshNet.Tpm](https://github.com/darinkes/SshNet.Tpm) - TPM-backed, non-exportable SSH authentication keys
