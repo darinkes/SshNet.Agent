@@ -30,7 +30,7 @@ jobs:
       env:
         SSHNET_AGENT_TESTS_REQUIRED: OpenSsh,Pageant,Server
     - name: Test against the lowest supported SSH.NET
-      run: dotnet test --verbosity normal -p:SshNetVersion=2024.2.0
+      run: dotnet test --verbosity normal -p:SshNetVersion=2026.0.0
       env:
         SSHNET_AGENT_TESTS_REQUIRED: OpenSsh,Pageant,Server
     - uses: actions/upload-artifact@v7
