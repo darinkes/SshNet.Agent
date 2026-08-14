@@ -18,7 +18,7 @@
         <ProjectReference Include="..\SshNet.Agent\SshNet.Agent.csproj" />
     </ItemGroup>
 
-    <!-- CI runs a second test leg with -p:SshNetVersion=2024.2.0 so the lowest
+    <!-- CI runs a second test leg with -p:SshNetVersion=2026.0.0 so the lowest
          SSH.NET the library claims to support stays tested; without the pin,
          Testcontainers pulls the newest SSH.NET into the test graph. Its own
          SSH.NET-based features (SSH port forwarding) are not used by these
