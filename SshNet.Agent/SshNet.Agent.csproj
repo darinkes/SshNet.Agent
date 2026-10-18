@@ -42,6 +42,6 @@
 
     <ItemGroup>
         <PackageReference Include="SSH.NET" Version="[2026.0.0,2027.0)" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.301" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.402" PrivateAssets="All" />
     </ItemGroup>
 </Project>
